@@ -94,31 +94,31 @@ function AddPatientModal({ onClose }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label className="block text-sm font-medium text-slate-300 mb-1">Full Name *</label>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name *</label>
             <input
               required
-              className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cyan-500"
+              className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-red-400 focus:bg-white transition-all shadow-sm"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Patient full name"
+              placeholder="e.g. Rahul Sharma"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Age *</label>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Age *</label>
             <input
               required
               type="number"
               min="1"
               max="120"
-              className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cyan-500"
+              className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-red-400 focus:bg-white transition-all shadow-sm"
               value={form.age}
               onChange={(e) => setForm({ ...form, age: e.target.value })}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Gender</label>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Gender</label>
             <select
-              className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cyan-500"
+              className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-red-400 focus:bg-white transition-all shadow-sm"
               value={form.gender}
               onChange={(e) => setForm({ ...form, gender: e.target.value })}
             >
@@ -128,36 +128,38 @@ function AddPatientModal({ onClose }) {
             </select>
           </div>
           <div className="col-span-2">
-            <label className="block text-sm font-medium text-slate-300 mb-1">Condition / Diagnosis *</label>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Condition / Diagnosis *</label>
             <input
               required
-              className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cyan-500"
+              className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-red-400 focus:bg-white transition-all shadow-sm"
               value={form.condition}
               onChange={(e) => setForm({ ...form, condition: e.target.value })}
               placeholder="e.g. Type 2 Diabetes"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Phone</label>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Phone</label>
             <input
-              className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cyan-500"
+              className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-red-400 focus:bg-white transition-all shadow-sm"
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              placeholder="+91 98765 43210"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email</label>
             <input
               type="email"
-              className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cyan-500"
+              className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-red-400 focus:bg-white transition-all shadow-sm"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
+              placeholder="patient@example.com"
             />
           </div>
         </div>
-        <div className="flex justify-end gap-3 pt-2">
-          <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
-          <button type="submit" className="btn-primary">Add Patient</button>
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <button type="button" onClick={onClose} className="btn-soft-pill text-xs">Cancel</button>
+          <button type="submit" className="btn-coral-pill text-xs">Add Patient</button>
         </div>
       </form>
     </Modal>
@@ -214,15 +216,15 @@ export function PatientListPage({ onNavigate, onSelectPatient }) {
   }, [enriched, filter, search]);
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto bg-[#fbfcff]">
       <TopBar
-        title="Patient List"
-        subtitle={`${patients.length} patients total`}
+        title="Patient Register"
+        subtitle={`${patients.length} active patient care journeys tracked`}
         actions={
           (user?.role === 'ADMIN' || user?.role === 'CARE_COORDINATOR') && (
             <button
               onClick={() => setShowAddModal(true)}
-              className="btn-primary flex items-center gap-2"
+              className="btn-coral-pill flex items-center gap-2 text-xs"
             >
               <UserPlus size={14} />
               Add Patient
@@ -231,29 +233,25 @@ export function PatientListPage({ onNavigate, onSelectPatient }) {
         }
       />
 
-      <div className="p-6">
+      <div className="p-6 space-y-5 max-w-7xl mx-auto">
         {/* Search and filter */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-5">
-          <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div className="clean-pill-card p-4 flex flex-col md:flex-row gap-4 items-center">
+          <div className="relative flex-1 w-full">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search by name, ID, or condition..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-600 text-white rounded-lg pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 placeholder-slate-500"
+              className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-full pl-10 pr-4 py-2 text-xs focus:outline-none focus:border-red-400 focus:bg-white transition-all placeholder-slate-400"
             />
           </div>
-          <div className="flex gap-1 flex-wrap">
+          <div className="flex gap-1.5 flex-wrap w-full md:w-auto">
             {FILTERS.map((f) => (
               <button
                 key={f.id}
                 onClick={() => setFilter(f.id)}
-                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                  filter === f.id
-                    ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                    : 'bg-slate-800 text-slate-400 border border-slate-700 hover:border-slate-600'
-                }`}
+                className={`filter-pill text-xs ${filter === f.id ? 'active' : ''}`}
               >
                 {f.label}
               </button>
@@ -262,10 +260,10 @@ export function PatientListPage({ onNavigate, onSelectPatient }) {
         </div>
 
         {/* Table */}
-        <div className="card overflow-hidden">
+        <div className="clean-pill-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-800/80 border-b border-slate-700">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50/80 border-b border-slate-100">
                 <tr>
                   <Th>Patient</Th>
                   <Th>Age / Gender</Th>
@@ -278,7 +276,7 @@ export function PatientListPage({ onNavigate, onSelectPatient }) {
                   <Th></Th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 {filtered.map((p) => (
                   <TableRow
                     key={p.id}
@@ -286,50 +284,52 @@ export function PatientListPage({ onNavigate, onSelectPatient }) {
                     highlight={p.highestPriority === 'HIGH'}
                   >
                     <Td>
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-red-50 border border-red-100 text-red-500 flex items-center justify-center font-bold text-xs flex-shrink-0">
                           {p.name[0]}
                         </div>
                         <div>
-                          <p className="font-semibold text-white text-xs">{p.name}</p>
-                          <p className="text-slate-500 text-xs">{p.id}</p>
+                          <p className="font-bold text-slate-900 text-xs hover:text-red-500 transition-colors">{p.name}</p>
+                          <p className="text-slate-400 text-[11px] font-mono">{p.id}</p>
                         </div>
                       </div>
                     </Td>
-                    <Td className="text-slate-300">{p.age} / {p.gender[0]}</Td>
+                    <Td className="text-slate-600 text-xs font-medium">{p.age} / {p.gender[0]}</Td>
                     <Td>
-                      <span className="text-xs text-slate-300">{p.condition}</span>
+                      <span className="text-xs text-slate-700 font-medium">{p.condition}</span>
                     </Td>
-                    <Td className="text-slate-400 text-xs">{p.lastAppointment}</Td>
+                    <Td className="text-slate-400 text-xs font-mono">{p.lastAppointment}</Td>
                     <Td>
-                      <span className="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded border border-slate-600">
+                      <span className="text-[11px] font-medium bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full border border-slate-200">
                         {p.currentStage}
                       </span>
                     </Td>
                     <Td>
                       {p.openGaps > 0 ? (
-                        <span className="font-bold text-red-400">{p.openGaps}</span>
+                        <span className="font-black text-red-500 text-sm bg-red-50 px-2 py-0.5 rounded-full border border-red-100">{p.openGaps}</span>
                       ) : (
-                        <span className="text-slate-500">0</span>
+                        <span className="text-slate-400 text-xs">0</span>
                       )}
                     </Td>
                     <Td>
                       {p.highestPriority ? (
                         <PriorityBadge priority={p.highestPriority} />
                       ) : (
-                        <span className="text-slate-500 text-xs">—</span>
+                        <span className="text-slate-400 text-xs">—</span>
                       )}
                     </Td>
                     <Td><CareStatusBadge status={p.careStatus} /></Td>
                     <Td>
-                      <ChevronRight size={14} className="text-slate-500" />
+                      <div className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-all">
+                        <ChevronRight size={16} />
+                      </div>
                     </Td>
                   </TableRow>
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="py-12 text-center text-slate-500 text-sm">
-                      No patients match the current filter.
+                    <td colSpan={9} className="py-16 text-center text-slate-400 text-xs">
+                      No patients match the current search or filter.
                     </td>
                   </tr>
                 )}
@@ -338,8 +338,8 @@ export function PatientListPage({ onNavigate, onSelectPatient }) {
           </div>
         </div>
 
-        <p className="text-xs text-slate-500 mt-3">
-          Showing {filtered.length} of {patients.length} patients
+        <p className="text-xs text-slate-400 font-medium">
+          Showing {filtered.length} of {patients.length} total patient records
         </p>
       </div>
 

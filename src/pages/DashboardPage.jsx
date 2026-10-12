@@ -18,12 +18,25 @@ import { TopBar } from '../components/shared/Navigation';
 import { STAGE_LABELS } from '../data/patients';
 
 const PRIORITY_COLORS = {
-  HIGH: '#ef4444',
+  HIGH: '#e84343',
   MEDIUM: '#f59e0b',
-  LOW: '#3b82f6',
+  LOW: '#38bdf8',
 };
 
-export function DashboardPage({ onNavigate }) {
+const TOOLTIP_STYLE = {
+  contentStyle: {
+    backgroundColor: '#ffffff',
+    border: '1px solid #f1f5f9',
+    borderRadius: '16px',
+    boxShadow: '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+    color: '#0f172a',
+    fontSize: '12px',
+    fontWeight: '600'
+  },
+  cursor: { fill: '#f8fafc' }
+};
+
+export function DashboardPage({ onNavigate, onSelectPatient }) {
   const { patients, activityLog, doctors, coordinators } = useApp();
   const stats = getAggregateStats(patients);
 
@@ -44,26 +57,25 @@ export function DashboardPage({ onNavigate }) {
   }
 
   const stageChartData = Object.entries(STAGE_LABELS).map(([key, label]) => ({
-    name: label.replace(' ', '\n'),
+    name: label.split(' ')[0],
     completed: stageCounts[key] || 0,
     total: patients.length,
   }));
 
   const priorityData = [
-    { name: 'HIGH', value: stats.highPriorityGaps, color: '#ef4444' },
+    { name: 'HIGH', value: stats.highPriorityGaps, color: '#e84343' },
     { name: 'MEDIUM', value: stats.mediumPriorityGaps, color: '#f59e0b' },
-    { name: 'LOW', value: stats.lowPriorityGaps, color: '#3b82f6' },
+    { name: 'LOW', value: stats.lowPriorityGaps, color: '#38bdf8' },
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto bg-[#fbfcff]">
       <TopBar
         title="Dashboard"
-        subtitle="Care gap overview across all active patients"
-        actions={
-          <SafetyDisclaimer />
-        }
+        subtitle="Care continuity telemetry across all registered patient pathways"
+        actions={<SafetyDisclaimer />}
       />
+
       <div className="p-6 space-y-6">
         {/* Stat cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -71,7 +83,7 @@ export function DashboardPage({ onNavigate }) {
             icon={Users}
             label="Active Patients"
             value={stats.totalPatients}
-            color="cyan"
+            color="sky"
             onClick={() => onNavigate('patients')}
           />
           <StatCard
@@ -109,135 +121,125 @@ export function DashboardPage({ onNavigate }) {
         </div>
 
         {/* Charts row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Care journey overview */}
-          <div className="card p-5 lg:col-span-2">
+          <div className="clean-pill-card lg:col-span-2">
             <SectionHeader
               title="Care Journey Overview"
-              subtitle="Patients who have completed each workflow stage"
+              subtitle="Completed workflow milestones across patient cohort"
             />
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={stageChartData} margin={{ top: 0, right: 0, left: -30, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fill: '#64748b', fontSize: 10 }}
-                  interval={0}
-                  angle={-30}
-                  textAnchor="end"
-                  height={50}
-                />
-                <YAxis tick={{ fill: '#64748b', fontSize: 10 }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#e2e8f0' }}
-                  cursor={{ fill: '#334155' }}
-                />
-                <Bar dataKey="completed" fill="#06b6d4" radius={[4, 4, 0, 0]} name="Completed" />
-                <Bar dataKey="total" fill="#1e293b" radius={[4, 4, 0, 0]} name="Total" />
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={stageChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 11, fontWeight: 500 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Tooltip {...TOOLTIP_STYLE} />
+                <Bar dataKey="completed" fill="#38bdf8" radius={[8, 8, 0, 0]} name="Completed" />
+                <Bar dataKey="total" fill="#e2e8f0" radius={[8, 8, 0, 0]} name="Total Cohort" />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Priority distribution */}
-          <div className="card p-5">
-            <SectionHeader title="Gap Priority" subtitle="Distribution of open gaps" />
-            <ResponsiveContainer width="100%" height={180}>
+          {/* Priority breakdown */}
+          <div className="clean-pill-card">
+            <SectionHeader
+              title="Priority Distribution"
+              subtitle="Gaps sorted by urgency"
+            />
+            <ResponsiveContainer width="100%" height={160}>
               <PieChart>
                 <Pie
                   data={priorityData}
                   cx="50%"
                   cy="50%"
+                  innerRadius={45}
                   outerRadius={70}
+                  paddingAngle={4}
                   dataKey="value"
-                  label={({ name, value }) => value > 0 ? `${name}: ${value}` : ''}
-                  labelLine={{ stroke: '#64748b' }}
                 >
-                  {priorityData.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color} opacity={0.85} />
+                  {priorityData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#e2e8f0' }}
-                />
+                <Tooltip {...TOOLTIP_STYLE} />
               </PieChart>
             </ResponsiveContainer>
-            <div className="flex justify-center gap-4 mt-2">
-              {priorityData.map((d) => (
-                <div key={d.name} className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-                  <span className="text-xs text-slate-400">{d.name}: <span className="text-white font-bold">{d.value}</span></span>
-                </div>
-              ))}
+            <div className="flex justify-around pt-3 border-t border-slate-100 text-xs font-semibold">
+              <span className="text-[#e84343] flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#e84343]" /> High: {stats.highPriorityGaps}</span>
+              <span className="text-amber-600 flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500" /> Med: {stats.mediumPriorityGaps}</span>
+              <span className="text-sky-600 flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-sky-400" /> Low: {stats.lowPriorityGaps}</span>
             </div>
           </div>
         </div>
 
-        {/* Open gaps table + activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Open care gaps table */}
-          <div className="card lg:col-span-2 overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700">
+        {/* Tables row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Open Care Gaps Table */}
+          <div className="clean-pill-card lg:col-span-2 overflow-hidden p-0">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h2 className="font-bold text-white">Open Care Gaps</h2>
-                <p className="text-xs text-slate-400 mt-0.5">{allGaps.length} gaps require attention</p>
+                <h3 className="text-base font-extrabold text-slate-900">Active Care Gaps</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Prioritized by severity and workflow blockage</p>
               </div>
               <button
                 onClick={() => onNavigate('gaps')}
-                className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300"
+                className="text-xs font-bold text-[#e84343] hover:underline flex items-center gap-1"
               >
-                View all <ArrowRight size={12} />
+                View all gaps <ArrowRight size={13} />
               </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-slate-800/60">
+                <thead>
                   <tr>
                     <Th>Patient</Th>
                     <Th>Gap Type</Th>
                     <Th>Priority</Th>
                     <Th>Confidence</Th>
                     <Th>Age</Th>
-                    <Th>Status</Th>
+                    <Th>Action</Th>
                   </tr>
                 </thead>
                 <tbody>
-                  {allGaps.slice(0, 8).map((gap) => (
-                    <TableRow key={gap.id}>
+                  {allGaps.slice(0, 5).map((gap) => (
+                    <TableRow key={gap.id} highlight={gap.priority === 'HIGH'}>
                       <Td>
-                        <div>
-                          <p className="font-medium text-white text-xs">{gap.patient?.name}</p>
-                          <p className="text-slate-500 text-xs">{gap.patientId}</p>
-                        </div>
+                        <button
+                          onClick={() => onSelectPatient && onSelectPatient(gap.patientId)}
+                          className="text-left font-bold text-slate-900 hover:text-[#e84343] transition-colors"
+                        >
+                          {gap.patient?.name}
+                          <span className="text-[11px] text-slate-400 block font-normal">{gap.patient?.condition}</span>
+                        </button>
                       </Td>
                       <Td><GapTypeChip type={gap.type} /></Td>
                       <Td><PriorityBadge priority={gap.priority} /></Td>
                       <Td className="min-w-[100px]"><ConfidenceBar score={gap.confidence} /></Td>
-                      <Td className="text-slate-400 text-xs">{gap.ageInDays}d</Td>
+                      <Td className="font-mono text-slate-500">{gap.ageInDays}d</Td>
                       <Td>
-                        <span className="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full">
-                          OPEN
-                        </span>
+                        <button
+                          onClick={() => onSelectPatient && onSelectPatient(gap.patientId)}
+                          className="btn-coral-sm text-[11px] py-1.5 px-3"
+                        >
+                          Inspect
+                        </button>
                       </Td>
                     </TableRow>
                   ))}
-                  {allGaps.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="text-center py-8 text-slate-500 text-sm">
-                        No open care gaps detected
-                      </td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>
           </div>
 
-          {/* Activity log */}
-          <div className="card p-5">
-            <SectionHeader title="Recent Activity" subtitle="Latest care workflow updates" />
-            <div className="space-y-4">
-              {activityLog.slice(0, 8).map((activity) => (
-                <ActivityItem key={activity.id} activity={activity} />
+          {/* Activity stream */}
+          <div className="clean-pill-card">
+            <SectionHeader
+              title="Continuity Activity"
+              subtitle="Real-time clinical event feed"
+            />
+            <div className="space-y-4 pt-1">
+              {activityLog.slice(0, 6).map((item) => (
+                <ActivityItem key={item.id} activity={item} />
               ))}
             </div>
           </div>

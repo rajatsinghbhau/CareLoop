@@ -17,7 +17,7 @@ function GapCard({ gap, patient, onResolve }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className={`card border ${gap.priority === 'HIGH' ? 'border-red-500/30' : gap.priority === 'MEDIUM' ? 'border-amber-500/20' : 'border-slate-700'}`}>
+    <div className={`clean-pill-card border ${gap.priority === 'HIGH' ? 'border-red-200 bg-red-50/30' : gap.priority === 'MEDIUM' ? 'border-amber-200 bg-amber-50/20' : 'border-slate-100'}`}>
       <div
         className="flex items-center justify-between p-4 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
@@ -25,36 +25,36 @@ function GapCard({ gap, patient, onResolve }) {
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <PriorityBadge priority={gap.priority} />
           <GapTypeChip type={gap.type} />
-          <p className="text-sm text-slate-300 truncate">{gap.description}</p>
+          <p className="text-xs font-bold text-slate-800 truncate">{gap.description}</p>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
           <ConfidenceBar score={gap.confidence} />
-          <span className="text-xs text-slate-500 w-8">{gap.ageInDays}d</span>
-          {expanded ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+          <span className="text-xs text-slate-400 font-mono w-8">{gap.ageInDays}d</span>
+          {expanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
         </div>
       </div>
 
       {expanded && (
-        <div className="px-4 pb-4 border-t border-slate-700/50 pt-4 space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="bg-slate-700/30 rounded-lg p-3">
-              <p className="text-xs text-slate-400 font-medium mb-2 uppercase tracking-wide">Gap Reasons</p>
+        <div className="px-5 pb-5 border-t border-slate-100 pt-4 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5">
+              <p className="text-[10px] text-slate-500 font-bold mb-2 uppercase tracking-wider">Gap Reasons</p>
               {gap.reasons.map((r, i) => (
-                <p key={i} className="text-xs text-slate-300 flex items-start gap-2 mb-1">
-                  <span className="text-red-400 mt-0.5">•</span>{r}
+                <p key={i} className="text-xs text-slate-700 flex items-start gap-2 mb-1.5">
+                  <span className="text-red-500 mt-0.5 font-bold">•</span>{r}
                 </p>
               ))}
             </div>
-            <div className="bg-slate-700/30 rounded-lg p-3">
-              <p className="text-xs text-slate-400 font-medium mb-2 uppercase tracking-wide">
-                Confidence: {gap.confidence}%
+            <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5">
+              <p className="text-[10px] text-slate-500 font-bold mb-2 uppercase tracking-wider">
+                Continuity Confidence: {gap.confidence}%
               </p>
               <ConfidenceBar score={gap.confidence} />
-              <div className="mt-2 space-y-1">
+              <div className="mt-2.5 space-y-1">
                 {gap.confidenceFactors?.map((f, i) => (
                   <div key={i} className="flex items-center gap-2 text-xs">
-                    <span className={f.met ? 'text-green-400' : 'text-slate-600'}>{f.met ? '✓' : '○'}</span>
-                    <span className={f.met ? 'text-slate-300' : 'text-slate-500'}>{f.label}</span>
+                    <span className={f.met ? 'text-emerald-500 font-bold' : 'text-slate-300'}>{f.met ? '✓' : '○'}</span>
+                    <span className={f.met ? 'text-slate-700 font-medium' : 'text-slate-400'}>{f.label}</span>
                   </div>
                 ))}
               </div>
@@ -62,22 +62,22 @@ function GapCard({ gap, patient, onResolve }) {
           </div>
 
           {gap.priorityReasons?.length > 0 && (
-            <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3">
-              <p className="text-xs text-amber-400 font-bold mb-2 uppercase tracking-wide">
+            <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-3.5">
+              <p className="text-xs text-amber-700 font-bold mb-2 uppercase tracking-wide">
                 {gap.priority} Priority — Reasons
               </p>
               {gap.priorityReasons.map((r, i) => (
-                <p key={i} className="text-xs text-slate-300 flex items-start gap-2 mb-1">
-                  <span className="text-amber-400 mt-0.5">•</span>{r}
+                <p key={i} className="text-xs text-slate-700 flex items-start gap-2 mb-1">
+                  <span className="text-amber-500 mt-0.5 font-bold">•</span>{r}
                 </p>
               ))}
             </div>
           )}
 
-          <div className="flex justify-end">
+          <div className="flex justify-end pt-2">
             <button
               onClick={() => onResolve(gap)}
-              className="btn-primary flex items-center gap-2"
+              className="btn-coral-sm flex items-center gap-2 text-xs"
             >
               <CheckCircle2 size={14} />
               Resolve Gap
@@ -112,19 +112,19 @@ function ResolveGapModal({ gap, patient, onClose }) {
   return (
     <Modal title={`Resolve Gap — ${patient.name}`} onClose={onClose}>
       <div className="space-y-4">
-        <div className="bg-slate-700/30 rounded-lg p-4 space-y-2">
+        <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-2">
           <div className="flex items-center gap-2">
             <PriorityBadge priority={gap.priority} />
             <GapTypeChip type={gap.type} />
           </div>
-          <p className="text-sm text-slate-300">{gap.description}</p>
-          <p className="text-xs text-slate-500">Affected stage: {gap.affectedStage}</p>
+          <p className="text-xs font-bold text-slate-900">{gap.description}</p>
+          <p className="text-[11px] text-slate-400">Affected stage: <span className="font-semibold text-slate-700">{gap.affectedStage}</span></p>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-300 mb-2">Resolution Action</label>
+          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Resolution Action</label>
           <select
-            className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cyan-500 mb-3"
+            className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-red-400 focus:bg-white mb-3"
             value={action}
             onChange={(e) => setAction(e.target.value)}
           >
@@ -137,26 +137,26 @@ function ResolveGapModal({ gap, patient, onClose }) {
             <option value="other">Other action taken</option>
           </select>
 
-          <label className="block text-sm font-medium text-slate-300 mb-2">Resolution Notes *</label>
+          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Resolution Notes *</label>
           <textarea
-            className="w-full bg-slate-700 border border-slate-600 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cyan-500 placeholder-slate-500"
+            className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-red-400 focus:bg-white placeholder-slate-400"
             rows={4}
-            placeholder="Describe the resolution action taken..."
+            placeholder="Describe clinical resolution action taken..."
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
         </div>
 
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-xs text-amber-400">
-          ⚠ This will mark the {gap.affectedStage} stage as COMPLETED. Ensure all clinical actions have been completed before resolving.
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 font-medium">
+          ⚠ This action marks the {gap.affectedStage} protocol step as COMPLETED. Ensure all cross-provider verification checks are validated.
         </div>
 
-        <div className="flex justify-end gap-3">
-          <button onClick={onClose} className="btn-secondary">Cancel</button>
+        <div className="flex justify-end gap-3 pt-2">
+          <button onClick={onClose} className="btn-soft-pill text-xs">Cancel</button>
           <button
             onClick={handleResolve}
             disabled={!notes.trim()}
-            className="btn-primary disabled:opacity-50"
+            className="btn-coral-pill text-xs disabled:opacity-50"
           >
             Mark as Resolved
           </button>
@@ -173,8 +173,8 @@ export function PatientDetailsPage({ patientId, onBack }) {
 
   const patient = patients.find((p) => p.id === patientId);
   if (!patient) return (
-    <div className="flex-1 flex items-center justify-center">
-      <p className="text-slate-500">Patient not found</p>
+    <div className="flex-1 flex items-center justify-center bg-[#fbfcff]">
+      <p className="text-slate-400">Patient not found</p>
     </div>
   );
 
@@ -190,14 +190,14 @@ export function PatientDetailsPage({ patientId, onBack }) {
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto bg-[#fbfcff]">
       <TopBar
         title={patient.name}
         subtitle={`${patient.id} · ${patient.condition}`}
         actions={
           <button
             onClick={onBack}
-            className="btn-secondary flex items-center gap-2"
+            className="btn-soft-pill flex items-center gap-2 text-xs"
           >
             <ArrowLeft size={14} />
             Back to Patients
@@ -205,35 +205,36 @@ export function PatientDetailsPage({ patientId, onBack }) {
         }
       />
 
-      <div className="p-6 space-y-5">
+      <div className="p-6 space-y-6 max-w-7xl mx-auto">
         {/* Quick summary */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="card p-4">
-            <p className="text-xs text-slate-400 mb-1">Care Status</p>
+          <div className="clean-pill-card p-5">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Care Status</p>
             <CareStatusBadge status={patient.careStatus} />
           </div>
-          <div className="card p-4">
-            <p className="text-xs text-slate-400 mb-1">Open Gaps</p>
-            <p className="text-2xl font-bold text-white">{gaps.length}</p>
+          <div className="clean-pill-card p-5">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Active Gaps</p>
+            <p className={`text-2xl font-black ${gaps.length > 0 ? 'text-red-500' : 'text-emerald-500'}`}>{gaps.length}</p>
           </div>
-          <div className="card p-4">
-            <p className="text-xs text-slate-400 mb-1">Assigned Doctor</p>
-            <p className="text-sm font-medium text-white">{doctor?.name || '—'}</p>
-            <p className="text-xs text-slate-500">{doctor?.specialty}</p>
+          <div className="clean-pill-card p-5">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Assigned Clinician</p>
+            <p className="text-xs font-bold text-slate-900 truncate">{doctor?.name || '—'}</p>
+            <p className="text-[11px] text-slate-400 font-medium truncate">{doctor?.specialty}</p>
           </div>
-          <div className="card p-4">
-            <p className="text-xs text-slate-400 mb-1">Care Coordinator</p>
-            <p className="text-sm font-medium text-white">{coordinator?.name || '—'}</p>
+          <div className="clean-pill-card p-5">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Care Coordinator</p>
+            <p className="text-xs font-bold text-slate-900 truncate">{coordinator?.name || '—'}</p>
+            <p className="text-[11px] text-slate-400 font-medium">Care Continuity Desk</p>
           </div>
         </div>
 
         {gaps.length > 0 && (
-          <div className="bg-red-900/20 border border-red-500/30 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertCircle size={16} className="text-red-400" />
-              <p className="text-red-400 font-bold text-sm">{gaps.length} CARE GAP{gaps.length !== 1 ? 'S' : ''} DETECTED</p>
+          <div className="bg-red-50/70 border border-red-200 rounded-2xl p-5">
+            <div className="flex items-center gap-2 mb-2.5">
+              <AlertCircle size={18} className="text-red-500" />
+              <p className="text-red-600 font-black text-xs uppercase tracking-wider">{gaps.length} CARE GAP{gaps.length !== 1 ? 'S' : ''} DETECTED ON PROTOCOL</p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-3">
               {gaps.map((g) => (
                 <div key={g.id} className="flex items-center gap-1.5">
                   <PriorityBadge priority={g.priority} />
@@ -246,16 +247,12 @@ export function PatientDetailsPage({ patientId, onBack }) {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 border-b border-slate-700 pb-0">
+        <div className="flex gap-2 border-b border-slate-200/80 pb-2">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors border-b-2 ${
-                activeTab === tab.id
-                  ? 'text-cyan-400 border-cyan-400 bg-cyan-500/5'
-                  : 'text-slate-400 border-transparent hover:text-white'
-              }`}
+              className={`filter-pill text-xs ${activeTab === tab.id ? 'active' : ''}`}
             >
               {tab.label}
             </button>
@@ -270,10 +267,12 @@ export function PatientDetailsPage({ patientId, onBack }) {
         {activeTab === 'gaps' && (
           <div className="space-y-3">
             {gaps.length === 0 ? (
-              <div className="card p-12 text-center">
-                <CheckCircle2 size={40} className="text-green-400 mx-auto mb-3" />
-                <p className="text-white font-medium">No care gaps detected</p>
-                <p className="text-slate-400 text-sm mt-1">The care journey is proceeding normally</p>
+              <div className="clean-pill-card p-12 text-center">
+                <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3 text-emerald-500">
+                  <CheckCircle2 size={24} />
+                </div>
+                <p className="text-slate-900 font-bold text-sm">No Care Gaps Detected</p>
+                <p className="text-slate-400 text-xs mt-1">This patient's cross-provider care journey is proceeding normally without protocol breakage</p>
               </div>
             ) : (
               gaps.map((gap) => (
@@ -289,18 +288,18 @@ export function PatientDetailsPage({ patientId, onBack }) {
         )}
 
         {activeTab === 'timeline' && (
-          <div className="card p-5">
-            <h3 className="font-bold text-white mb-5">Care Event Timeline</h3>
-            <div className="relative">
+          <div className="clean-pill-card p-6">
+            <h3 className="font-bold text-slate-900 text-sm mb-6">Care Event Timeline</h3>
+            <div className="relative space-y-6">
               {patient.careEvents?.map((event, idx) => {
                 const statusColors = {
-                  COMPLETED: 'bg-green-500',
-                  PENDING: 'bg-amber-500',
+                  COMPLETED: 'bg-emerald-500',
+                  PENDING: 'bg-amber-400',
                   OVERDUE: 'bg-red-500',
-                  MISSING: 'bg-red-700',
-                  SCHEDULED: 'bg-blue-500',
-                  NOT_STARTED: 'bg-slate-600',
-                  NOT_REQUIRED: 'bg-slate-700',
+                  MISSING: 'bg-red-600',
+                  SCHEDULED: 'bg-sky-500',
+                  NOT_STARTED: 'bg-slate-300',
+                  NOT_REQUIRED: 'bg-slate-300',
                 };
                 const stageLabels = {
                   CONSULTATION: 'Consultation',
@@ -313,21 +312,21 @@ export function PatientDetailsPage({ patientId, onBack }) {
                   CARE_CLOSED: 'Care Closed',
                 };
                 return (
-                  <div key={event.id} className="flex gap-4 mb-5 last:mb-0">
+                  <div key={event.id} className="flex gap-4 last:mb-0">
                     <div className="flex flex-col items-center">
-                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${statusColors[event.status] || 'bg-slate-600'}`} />
+                      <div className={`w-3.5 h-3.5 rounded-full flex-shrink-0 ${statusColors[event.status] || 'bg-slate-300'} ring-4 ring-white shadow-sm`} />
                       {idx < patient.careEvents.length - 1 && (
-                        <div className="w-px flex-1 bg-slate-700 mt-1" />
+                        <div className="w-0.5 flex-1 bg-slate-200 mt-2" />
                       )}
                     </div>
                     <div className="flex-1 pb-4">
                       <div className="flex items-center justify-between">
-                        <p className="font-medium text-white text-sm">{stageLabels[event.stage] || event.stage}</p>
-                        <span className="text-xs text-slate-500">{event.date || 'Pending'}</span>
+                        <p className="font-bold text-slate-800 text-xs">{stageLabels[event.stage] || event.stage}</p>
+                        <span className="text-[11px] text-slate-400 font-mono font-medium">{event.date || 'Pending'}</span>
                       </div>
-                      <p className="text-xs text-slate-400 mt-0.5">Status: {event.status}</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5 font-medium">Status: <span className="font-semibold text-slate-700">{event.status}</span></p>
                       {event.notes && (
-                        <p className="text-xs text-slate-400 mt-1 bg-slate-700/30 rounded p-2">
+                        <p className="text-xs text-slate-600 mt-2 bg-slate-50 border border-slate-100 rounded-xl p-3">
                           {event.notes}
                         </p>
                       )}
@@ -340,41 +339,45 @@ export function PatientDetailsPage({ patientId, onBack }) {
         )}
 
         {activeTab === 'info' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="card p-5 space-y-4">
-              <h3 className="font-bold text-white flex items-center gap-2">
-                <User size={16} className="text-cyan-400" /> Patient Information
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="clean-pill-card p-6 space-y-4">
+              <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                <User size={16} className="text-red-500" /> Patient Demographics
               </h3>
-              {[
-                { label: 'Patient ID', value: patient.id },
-                { label: 'Full Name', value: patient.name },
-                { label: 'Age', value: `${patient.age} years` },
-                { label: 'Gender', value: patient.gender },
-                { label: 'Condition', value: patient.condition },
-                { label: 'Last Appointment', value: patient.lastAppointment },
-              ].map(({ label, value }) => (
-                <div key={label} className="flex items-start justify-between text-sm">
-                  <span className="text-slate-400">{label}</span>
-                  <span className="text-white font-medium text-right">{value}</span>
-                </div>
-              ))}
+              <div className="divide-y divide-slate-100">
+                {[
+                  { label: 'Patient ID', value: patient.id },
+                  { label: 'Full Name', value: patient.name },
+                  { label: 'Age', value: `${patient.age} years` },
+                  { label: 'Gender', value: patient.gender },
+                  { label: 'Primary Condition', value: patient.condition },
+                  { label: 'Last Recorded Appt.', value: patient.lastAppointment },
+                ].map(({ label, value }) => (
+                  <div key={label} className="py-2.5 flex items-start justify-between text-xs">
+                    <span className="text-slate-400 font-medium">{label}</span>
+                    <span className="text-slate-800 font-bold text-right">{value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="card p-5 space-y-4">
-              <h3 className="font-bold text-white flex items-center gap-2">
-                <Phone size={16} className="text-cyan-400" /> Contact & Care Team
+            <div className="clean-pill-card p-6 space-y-4">
+              <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                <Phone size={16} className="text-red-500" /> Contact & Care Team
               </h3>
-              {[
-                { label: 'Phone', value: patient.phone },
-                { label: 'Email', value: patient.email },
-                { label: 'Doctor', value: doctor?.name || '—' },
-                { label: 'Specialty', value: doctor?.specialty || '—' },
-                { label: 'Coordinator', value: coordinator?.name || '—' },
-              ].map(({ label, value }) => (
-                <div key={label} className="flex items-start justify-between text-sm">
-                  <span className="text-slate-400">{label}</span>
-                  <span className="text-white font-medium text-right">{value}</span>
-                </div>
-              ))}
+              <div className="divide-y divide-slate-100">
+                {[
+                  { label: 'Primary Phone', value: patient.phone },
+                  { label: 'Email Address', value: patient.email },
+                  { label: 'Attending Physician', value: doctor?.name || '—' },
+                  { label: 'Specialty', value: doctor?.specialty || '—' },
+                  { label: 'Coordinator Desk', value: coordinator?.name || '—' },
+                ].map(({ label, value }) => (
+                  <div key={label} className="py-2.5 flex items-start justify-between text-xs">
+                    <span className="text-slate-400 font-medium">{label}</span>
+                    <span className="text-slate-800 font-bold text-right">{value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}

@@ -130,26 +130,26 @@ export function DemoSimulationPage({ onSelectPatient }) {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto bg-[#fbfcff]">
       <TopBar
-        title="Demo Mode"
-        subtitle="Interactive care gap simulation for demonstration"
+        title="Demo Simulation Lab"
+        subtitle="Interactive care gap scenario walkthroughs for clinical judges"
       />
 
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 max-w-7xl mx-auto">
         <SafetyDisclaimer />
 
-        <div className="bg-gradient-to-r from-slate-800 to-slate-700 border border-slate-600 rounded-xl p-5">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center">
-              <Activity size={16} className="text-cyan-400" />
-            </div>
-            <h3 className="font-bold text-white">CARELOOP Demo Simulation</h3>
+        <div className="clean-pill-card p-6 bg-white border border-slate-100 flex items-start gap-4">
+          <div className="w-10 h-10 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center flex-shrink-0 text-red-500">
+            <Activity size={20} />
           </div>
-          <p className="text-slate-400 text-sm">
-            Select a real-world care gap scenario below to see how CARELOOP detects broken care loops, 
-            assigns confidence scores, and explains the gap reasoning step by step.
-          </p>
+          <div>
+            <h3 className="font-bold text-slate-900 text-sm mb-1">CARELOOP Clinical Journey Simulation</h3>
+            <p className="text-slate-500 text-xs leading-relaxed">
+              Select an archetype care gap scenario below to see how CARELOOP detects cross-provider breakdowns, 
+              calculates confidence probabilities, and proves why human intervention is triggered.
+            </p>
+          </div>
         </div>
 
         {/* Scenario cards */}
@@ -158,28 +158,26 @@ export function DemoSimulationPage({ onSelectPatient }) {
             const patient = patients.find((p) => p.id === s.patientId);
             const gaps = patient ? detectCareGaps(patient) : [];
             const isSelected = selectedScenario === s.id;
-            const colorClasses = {
-              red: 'border-red-500/30 hover:border-red-500/60',
-              amber: 'border-amber-500/30 hover:border-amber-500/60',
-            };
 
             return (
               <button
                 key={s.id}
                 onClick={() => { setSelectedScenario(s.id); setStep(0); setCompleted(false); setRunning(false); }}
-                className={`card text-left p-4 transition-all border-2 ${colorClasses[s.color]} ${
-                  isSelected ? 'ring-2 ring-cyan-500/50 border-cyan-500/50' : ''
-                } hover:scale-[1.02]`}
+                className={`clean-pill-card text-left p-5 transition-all border-2 ${
+                  isSelected ? 'border-red-500 bg-red-50/20 shadow-md ring-2 ring-red-400/20' : 'border-slate-100 hover:border-slate-300'
+                } hover:scale-[1.01]`}
               >
-                <div className="text-2xl mb-2">{s.icon}</div>
-                <h4 className="font-bold text-white mb-1">{s.title}</h4>
-                <p className="text-sm text-slate-400 mb-3">{s.description}</p>
-                <div className="flex items-center justify-between">
+                <div className="text-3xl mb-3">{s.icon}</div>
+                <h4 className="font-bold text-slate-900 text-sm mb-1">{s.title}</h4>
+                <p className="text-xs text-slate-500 mb-4 line-clamp-2 leading-relaxed">{s.description}</p>
+                <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                   <div>
-                    <p className="text-xs text-slate-500">Patient: {patient?.name}</p>
-                    <p className="text-xs text-slate-500">{gaps.length} gap(s) detected</p>
+                    <p className="text-[11px] text-slate-800 font-bold">{patient?.name}</p>
+                    <p className="text-[10px] text-red-500 font-bold">{gaps.length} gap(s) detected</p>
                   </div>
-                  <ChevronRight size={16} className={isSelected ? 'text-cyan-400' : 'text-slate-600'} />
+                  <div className={`p-1.5 rounded-full ${isSelected ? 'bg-red-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                    <ChevronRight size={14} />
+                  </div>
                 </div>
               </button>
             );
@@ -188,24 +186,26 @@ export function DemoSimulationPage({ onSelectPatient }) {
 
         {/* Simulation runner */}
         {selectedScenario && scenario && scenarioPatient && (
-          <div className="space-y-5">
-            <div className="card p-5">
-              <div className="flex items-center justify-between mb-4">
+          <div className="space-y-6">
+            <div className="clean-pill-card p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
-                  <h3 className="font-bold text-white text-lg">{scenario.icon} {scenario.title}</h3>
-                  <p className="text-slate-400 text-sm mt-0.5">{scenario.description}</p>
+                  <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                    <span>{scenario.icon}</span> {scenario.title}
+                  </h3>
+                  <p className="text-slate-500 text-xs mt-0.5">{scenario.description}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={reset} className="btn-secondary flex items-center gap-1.5">
+                  <button onClick={reset} className="btn-soft-pill flex items-center gap-1.5 text-xs">
                     <RotateCcw size={13} /> Reset
                   </button>
                   <button
                     onClick={runScenario}
                     disabled={running}
-                    className="btn-primary flex items-center gap-2 disabled:opacity-60"
+                    className="btn-coral-pill flex items-center gap-2 text-xs disabled:opacity-60"
                   >
                     {running ? (
-                      <><FastForward size={14} className="animate-pulse" /> Running...</>
+                      <><FastForward size={14} className="animate-pulse" /> Running Protocol...</>
                     ) : (
                       <><Play size={14} /> Run Simulation</>
                     )}
@@ -214,27 +214,27 @@ export function DemoSimulationPage({ onSelectPatient }) {
               </div>
 
               {/* Step animation */}
-              <div className="space-y-2">
-                <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-3">Simulation Steps</p>
+              <div className="space-y-2.5">
+                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-3">Simulation Sequence</p>
                 {scenario.steps.map((s, i) => (
                   <div
                     key={i}
-                    className={`flex items-start gap-3 text-sm p-3 rounded-lg transition-all duration-300 ${
+                    className={`flex items-start gap-3 text-xs p-3.5 rounded-xl transition-all duration-300 ${
                       i < step
-                        ? 'bg-green-500/10 border border-green-500/20'
+                        ? 'bg-emerald-50/80 border border-emerald-200 text-emerald-900'
                         : i === step && running
-                        ? 'bg-cyan-500/10 border border-cyan-500/30 animate-pulse'
-                        : 'bg-slate-700/20 border border-slate-700/50 opacity-40'
+                        ? 'bg-red-50 border border-red-300 text-red-900 animate-pulse font-bold'
+                        : 'bg-slate-50 border border-slate-100 opacity-40 text-slate-400'
                     }`}
                   >
                     {i < step ? (
-                      <CheckCircle2 size={14} className="text-green-400 mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 size={16} className="text-emerald-500 mt-0.5 flex-shrink-0" />
                     ) : i === step && running ? (
-                      <Activity size={14} className="text-cyan-400 mt-0.5 flex-shrink-0 animate-pulse" />
+                      <Activity size={16} className="text-red-500 mt-0.5 flex-shrink-0 animate-pulse" />
                     ) : (
-                      <div className="w-3.5 h-3.5 rounded-full border border-slate-600 flex-shrink-0 mt-0.5" />
+                      <div className="w-3.5 h-3.5 rounded-full border border-slate-300 flex-shrink-0 mt-0.5" />
                     )}
-                    <span className={i < step ? 'text-slate-200' : i === step && running ? 'text-cyan-300' : 'text-slate-500'}>
+                    <span className="leading-relaxed font-medium">
                       {s}
                     </span>
                   </div>
@@ -242,20 +242,21 @@ export function DemoSimulationPage({ onSelectPatient }) {
               </div>
 
               {completed && (
-                <div className="mt-4 bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+                <div className="mt-6 bg-emerald-50/80 border border-emerald-200 rounded-2xl p-6">
                   <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 size={16} className="text-green-400" />
-                    <p className="text-green-400 font-bold">Simulation Complete</p>
+                    <CheckCircle2 size={20} className="text-emerald-500" />
+                    <p className="text-emerald-900 font-bold text-sm">Simulation Verification Complete</p>
                   </div>
-                  <p className="text-slate-300 text-sm mb-3">
-                    CARELOOP has detected the following gaps for {scenarioPatient.name}:
+                  <p className="text-slate-600 text-xs mb-4">
+                    CARELOOP has confirmed broken continuity and flagged the following gaps for <span className="font-bold text-slate-900">{scenarioPatient.name}</span>:
                   </p>
-                  <div className="space-y-2">
+                  <div className="space-y-2 mb-4">
                     {scenarioGaps.map((gap) => (
-                      <div key={gap.id} className="flex items-center justify-between bg-slate-700/30 rounded-lg p-3">
+                      <div key={gap.id} className="flex items-center justify-between bg-white border border-emerald-100 rounded-xl p-3 shadow-sm">
                         <div className="flex items-center gap-2">
                           <PriorityBadge priority={gap.priority} />
                           <GapTypeChip type={gap.type} />
+                          <span className="text-xs font-bold text-slate-800 ml-1">{gap.description}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <ConfidenceBar score={gap.confidence} />
@@ -265,19 +266,19 @@ export function DemoSimulationPage({ onSelectPatient }) {
                   </div>
                   <button
                     onClick={() => onSelectPatient(scenarioPatient.id)}
-                    className="btn-primary mt-3 flex items-center gap-2"
+                    className="btn-coral-pill flex items-center gap-2 text-xs"
                   >
                     <Zap size={14} />
-                    View Full Patient Details & Care Graph
+                    View Live Patient Journey & Graph
                   </button>
                 </div>
               )}
             </div>
 
             {/* Show the care graph for the scenario patient */}
-            <div className="card p-5">
-              <h3 className="font-bold text-white mb-4">
-                Care Closure Graph — {scenarioPatient.name}
+            <div className="clean-pill-card p-6">
+              <h3 className="font-bold text-slate-900 text-sm mb-4">
+                Care Closure Protocol — {scenarioPatient.name}
               </h3>
               <CareClosureGraph patient={scenarioPatient} gaps={scenarioGaps} />
             </div>

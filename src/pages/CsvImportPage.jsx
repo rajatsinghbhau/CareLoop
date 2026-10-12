@@ -176,41 +176,41 @@ export function CsvImportPage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto bg-[#fbfcff]">
       <TopBar
-        title="CSV Import"
-        subtitle="Import patient records from a CSV file"
+        title="CSV Batch Ingestion"
+        subtitle="Bulk import patient care records and multi-provider protocol history"
         actions={
-          <button onClick={downloadTemplate} className="btn-secondary flex items-center gap-2">
+          <button onClick={downloadTemplate} className="btn-soft-pill flex items-center gap-2 text-xs">
             <Download size={14} />
-            Download Template
+            Download CSV Template
           </button>
         }
       />
 
-      <div className="p-6 space-y-6 max-w-4xl">
+      <div className="p-6 space-y-6 max-w-4xl mx-auto">
         <SafetyDisclaimer />
 
         {/* Format guide */}
-        <div className="card p-5">
-          <h3 className="font-bold text-white mb-3 flex items-center gap-2">
-            <FileText size={16} className="text-cyan-400" /> CSV Format
+        <div className="clean-pill-card p-6">
+          <h3 className="font-bold text-slate-900 text-sm mb-3 flex items-center gap-2">
+            <FileText size={16} className="text-red-500" /> Supported CSV Schema
           </h3>
-          <div className="bg-slate-900 rounded-lg p-4 overflow-x-auto">
-            <code className="text-xs text-green-400 font-mono whitespace-nowrap">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 overflow-x-auto">
+            <code className="text-xs text-slate-800 font-mono whitespace-nowrap">
               patient_id, name, age, gender, condition, phone, email, consultation_date, test_ordered, test_completed, result_available, doctor_review, referral, follow_up
             </code>
           </div>
-          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="bg-slate-700/30 rounded-lg p-3">
-              <p className="text-xs font-medium text-slate-300 mb-1">Date values (YYYY-MM-DD)</p>
-              <p className="text-xs text-slate-400">Use a date to mark the stage as COMPLETED</p>
-              <p className="text-xs text-slate-500 font-mono mt-1">e.g. 2026-10-01</p>
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5">
+              <p className="text-xs font-bold text-slate-800 mb-1">Standardized Date (YYYY-MM-DD)</p>
+              <p className="text-xs text-slate-500">Provide an ISO date to mark the stage verified as COMPLETED</p>
+              <p className="text-xs text-red-500 font-mono font-bold mt-1">e.g. 2026-10-01</p>
             </div>
-            <div className="bg-slate-700/30 rounded-lg p-3">
-              <p className="text-xs font-medium text-slate-300 mb-1">Status keywords</p>
-              <p className="text-xs text-slate-400">pending, overdue, scheduled, not_required</p>
-              <p className="text-xs text-slate-500 font-mono mt-1">Leave blank for NOT_STARTED</p>
+            <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5">
+              <p className="text-xs font-bold text-slate-800 mb-1">Status Protocol Flags</p>
+              <p className="text-xs text-slate-500">pending, overdue, scheduled, not_required</p>
+              <p className="text-xs text-slate-400 font-mono mt-1">Leave blank to default to NOT_STARTED</p>
             </div>
           </div>
         </div>
@@ -221,10 +221,10 @@ export function CsvImportPage() {
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all ${
+          className={`border-2 border-dashed rounded-3xl p-12 text-center cursor-pointer transition-all ${
             isDragging
-              ? 'border-cyan-500 bg-cyan-500/5'
-              : 'border-slate-600 hover:border-slate-500 hover:bg-slate-800/30'
+              ? 'border-red-500 bg-red-50/50 scale-[1.01]'
+              : 'border-slate-200 bg-white hover:border-red-300 hover:bg-slate-50/50 shadow-sm'
           }`}
         >
           <input
@@ -234,67 +234,69 @@ export function CsvImportPage() {
             onChange={handleFileChange}
             className="hidden"
           />
-          <Upload size={32} className={`mx-auto mb-3 ${isDragging ? 'text-cyan-400' : 'text-slate-500'}`} />
-          <p className="text-white font-medium">
-            {isDragging ? 'Drop your CSV file here' : 'Drag and drop or click to upload'}
+          <div className="w-14 h-14 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-3 text-red-500 shadow-sm">
+            <Upload size={24} />
+          </div>
+          <p className="text-slate-900 font-bold text-sm">
+            {isDragging ? 'Drop your CSV file here' : 'Drag and drop or click to upload CSV'}
           </p>
-          <p className="text-slate-400 text-sm mt-1">CSV files only</p>
+          <p className="text-slate-400 text-xs mt-1">Comma-separated values (.csv) only</p>
         </div>
 
         {error && (
-          <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg px-4 py-3 text-sm">
-            <AlertCircle size={14} />
+          <div className="flex items-center gap-2.5 bg-red-50 border border-red-200 text-red-600 rounded-xl px-4 py-3 text-xs font-semibold">
+            <AlertCircle size={16} />
             {error}
           </div>
         )}
 
         {imported && (
-          <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 text-green-400 rounded-lg px-4 py-3 text-sm">
-            <CheckCircle2 size={14} />
-            Import successful! Patients have been added to the system.
+          <div className="flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-4 py-3 text-xs font-semibold">
+            <CheckCircle2 size={16} />
+            Import successful! Patient care pathways have been ingested into the continuity engine.
           </div>
         )}
 
         {/* Preview */}
         {preview && (
-          <div className="card overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700">
+          <div className="clean-pill-card overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
               <div>
-                <h3 className="font-bold text-white">Import Preview</h3>
-                <p className="text-xs text-slate-400 mt-0.5">{preview.patients.length} patient(s) ready to import</p>
+                <h3 className="font-bold text-slate-900 text-sm">Ingestion Preview</h3>
+                <p className="text-xs text-slate-400 mt-0.5">{preview.patients.length} patient record(s) parsed and validated</p>
               </div>
-              <div className="flex gap-3">
-                <button onClick={() => setPreview(null)} className="btn-secondary flex items-center gap-1">
+              <div className="flex gap-2.5">
+                <button onClick={() => setPreview(null)} className="btn-soft-pill flex items-center gap-1 text-xs">
                   <X size={12} /> Cancel
                 </button>
-                <button onClick={handleImport} className="btn-primary flex items-center gap-2">
+                <button onClick={handleImport} className="btn-coral-pill flex items-center gap-2 text-xs">
                   <Upload size={14} />
-                  Import {preview.patients.length} Patient(s)
+                  Import {preview.patients.length} Record(s)
                 </button>
               </div>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead className="bg-slate-800/60">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-slate-50/80 border-b border-slate-100">
                   <tr>
-                    {['ID', 'Name', 'Age', 'Gender', 'Condition', 'Stages Detected'].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left text-slate-400 font-medium uppercase tracking-wide">{h}</th>
+                    {['ID', 'Name', 'Age', 'Gender', 'Condition', 'Verified Stages'].map((h) => (
+                      <th key={h} className="px-5 py-3 text-slate-500 font-bold uppercase tracking-wider">{h}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {preview.patients.map((p) => {
                     const completed = p.careEvents.filter((e) => e.status === 'COMPLETED').length;
                     return (
-                      <tr key={p.id} className="border-b border-slate-700/50">
-                        <td className="px-4 py-3 text-cyan-400 font-mono">{p.id}</td>
-                        <td className="px-4 py-3 text-white font-medium">{p.name}</td>
-                        <td className="px-4 py-3 text-slate-300">{p.age}</td>
-                        <td className="px-4 py-3 text-slate-300">{p.gender}</td>
-                        <td className="px-4 py-3 text-slate-300">{p.condition}</td>
-                        <td className="px-4 py-3">
-                          <span className="text-green-400 font-medium">{completed}</span>
-                          <span className="text-slate-500"> / {p.careEvents.length} stages</span>
+                      <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="px-5 py-3 text-red-500 font-mono font-bold">{p.id}</td>
+                        <td className="px-5 py-3 text-slate-900 font-bold">{p.name}</td>
+                        <td className="px-5 py-3 text-slate-600 font-medium">{p.age}</td>
+                        <td className="px-5 py-3 text-slate-600 font-medium">{p.gender}</td>
+                        <td className="px-5 py-3 text-slate-600 font-medium">{p.condition}</td>
+                        <td className="px-5 py-3">
+                          <span className="text-emerald-600 font-bold">{completed}</span>
+                          <span className="text-slate-400"> of {p.careEvents.length} stages</span>
                         </td>
                       </tr>
                     );
