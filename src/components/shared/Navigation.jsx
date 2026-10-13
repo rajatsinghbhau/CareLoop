@@ -8,16 +8,15 @@ import {
 import { useApp } from '../../context/AppContext';
 
 const NAV_ITEMS = [
-  { id: 'landing', label: 'Home Portal', icon: Globe, badge: 'PORTAL' },
-  { id: 'patient-dashboard', label: 'Patient Dashboard', icon: Activity, badge: 'PATIENT' },
-  { id: 'map', label: 'Continuity Map', icon: GitCommit, badge: 'SIGNATURE' },
-  { id: 'patients', label: 'Patient Register', icon: Users },
-  { id: 'gaps', label: 'Care Gaps', icon: AlertCircle },
-  { id: 'tasks', label: 'Action Center', icon: ClipboardList },
-  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-  { id: 'demo', label: 'Demo Simulation', icon: Play },
-  { id: 'import', label: 'CSV Ingestion', icon: Upload },
-  { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'landing', label: 'Home Portal', icon: Globe, badge: 'PORTAL', roles: ['ADMIN'] },
+  { id: 'map', label: 'Continuity Map', icon: GitCommit, badge: 'SIGNATURE', roles: ['ADMIN', 'DOCTOR'] },
+  { id: 'patients', label: 'Patient Register', icon: Users, roles: ['ADMIN', 'DOCTOR'] },
+  { id: 'gaps', label: 'Care Gaps', icon: AlertCircle, roles: ['ADMIN', 'DOCTOR'] },
+  { id: 'tasks', label: 'Action Center', icon: ClipboardList, roles: ['ADMIN', 'DOCTOR'] },
+  { id: 'analytics', label: 'Analytics', icon: BarChart3, roles: ['ADMIN', 'DOCTOR'] },
+  { id: 'demo', label: 'Demo Simulation', icon: Play, roles: ['ADMIN'] },
+  { id: 'import', label: 'CSV Ingestion', icon: Upload, roles: ['ADMIN'] },
+  { id: 'settings', label: 'Settings', icon: Settings, roles: ['ADMIN', 'DOCTOR'] },
 ];
 
 export function Sidebar({ currentPage, onNavigate }) {
@@ -50,7 +49,7 @@ export function Sidebar({ currentPage, onNavigate }) {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {NAV_ITEMS.map((item) => {
+        {NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(user?.role)).map((item) => {
           const Icon = item.icon;
           const active = currentPage === item.id;
           return (

@@ -20,11 +20,15 @@ function AppContent() {
   const [currentPage, setCurrentPage] = useState('landing');
   const [selectedPatientId, setSelectedPatientId] = useState('P-1001');
 
-  // When logging in as Rahul Sharma (PATIENT role), route directly to the Patient Dashboard
+  // Strict role isolation:
+  // - PATIENT: locked strictly to 'patient-dashboard'
+  // - DOCTOR / ADMIN: starts at 'map' (Continuity Map) or 'landing', with NO access to patient-dashboard
   useEffect(() => {
     if (user?.role === 'PATIENT') {
       setCurrentPage('patient-dashboard');
-    } else if (user) {
+    } else if (user?.role === 'DOCTOR') {
+      setCurrentPage('map');
+    } else if (user?.role === 'ADMIN') {
       setCurrentPage('landing');
     }
   }, [user]);
@@ -34,19 +38,28 @@ function AppContent() {
   }
 
   const handleNavigate = (page) => {
+    // Role guard: block non-patients from accessing patient-dashboard
+    if (page === 'patient-dashboard' && user?.role !== 'PATIENT') {
+      return;
+    }
+    // Role guard: block patients from accessing staff pages
+    if (user?.role === 'PATIENT' && page !== 'patient-dashboard') {
+      return;
+    }
     setCurrentPage(page);
   };
 
   const handleSelectPatient = (patientId) => {
+    if (user?.role === 'PATIENT') return; // Patients cannot view other patients
     setSelectedPatientId(patientId);
     setCurrentPage('map');
   };
 
-  // Patient Dashboard has its own dedicated Left Sidebar & Top Bar layout
-  if (currentPage === 'patient-dashboard' || currentPage === 'dashboard') {
+  // If user is a PATIENT, they only ever see their personal PatientDashboardPage
+  if (user?.role === 'PATIENT' || currentPage === 'patient-dashboard') {
     return (
       <>
-        <PatientDashboardPage onBackToLanding={() => setCurrentPage('landing')} />
+        <PatientDashboardPage />
         <NotificationToast />
       </>
     );

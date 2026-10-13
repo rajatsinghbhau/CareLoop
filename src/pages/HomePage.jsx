@@ -57,14 +57,14 @@ export function HomePage({ onExploreApp, onSelectPatient }) {
               onClick={() => onExploreApp('map')}
               className="btn-coral-sm text-xs"
             >
-              <span>Launch Map</span>
+              <span>Launch Continuity Map</span>
               <ArrowRight size={13} />
             </button>
             <button
-              onClick={() => onExploreApp('patient-dashboard')}
+              onClick={() => onExploreApp('patients')}
               className="btn-soft-pill text-xs py-2 px-4 hidden sm:inline-flex"
             >
-              Patient Dashboard
+              Patient Register
             </button>
           </div>
         </div>

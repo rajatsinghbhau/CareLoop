@@ -642,21 +642,14 @@ export function PatientDashboardPage({ onBackToLanding }) {
               </div>
             </div>
 
-            <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between gap-1">
-              {onBackToLanding && (
-                <button
-                  type="button"
-                  onClick={onBackToLanding}
-                  className="text-[11px] font-bold text-slate-500 hover:text-slate-900 flex items-center gap-1 cursor-pointer"
-                >
-                  <Globe size={11} />
-                  <span>Home Portal</span>
-                </button>
-              )}
+            <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[10px] font-semibold text-slate-400">
+                Logged in as Patient
+              </span>
               <button
                 type="button"
                 onClick={logout}
-                className="text-[11px] font-bold text-slate-500 hover:text-[#e84343] flex items-center gap-1 ml-auto cursor-pointer"
+                className="text-[11px] font-bold text-slate-500 hover:text-[#e84343] flex items-center gap-1 cursor-pointer transition-colors"
               >
                 <LogOut size={11} />
                 <span>Sign out</span>
