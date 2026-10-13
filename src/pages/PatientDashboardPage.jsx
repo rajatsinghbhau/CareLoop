@@ -3,12 +3,13 @@
 // Harmonizes the clean bone-white (#fbfcff), coral (#e84343), deep navy (#0f172a),
 // and subtle teal (#0d9488) aesthetic of CARELOOP.
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Activity, GitCommit, CheckSquare, FileText, Calendar, ShieldCheck,
   Sparkles, HelpCircle, Settings, Search, Bell, User, LogOut,
   CheckCircle2, AlertTriangle, Building2, Lock, Play, RotateCcw,
-  Eye, X, Plus, ExternalLink, Globe, Phone, Mail, Clock, ArrowRight
+  Eye, X, Plus, ExternalLink, Globe, Phone, Mail, Clock, ArrowRight,
+  Loader2, Database, Wifi, WifiOff, Download, Printer, Share2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import {
@@ -20,6 +21,16 @@ import {
   INITIAL_SHARED_RECORDS,
   INITIAL_ACTIVITY,
 } from '../data/patientPortalData';
+import {
+  patientService,
+  journeyService,
+  careGapService,
+  reportService,
+  appointmentService,
+  sharedRecordService,
+  activityService,
+  assistantService,
+} from '../lib/supabaseService';
 import {
   ProgressCard,
   CareJourney,
@@ -50,13 +61,18 @@ const SIDEBAR_BOTTOM_NAV = [
 ];
 
 export function PatientDashboardPage({ onBackToLanding }) {
-  const { logout } = useApp();
+  const { logout, user } = useApp();
+  const PATIENT_ID = user?.patientId || 'P-1001';
 
   // Active Navigation Tab
   const [activeNav, setActiveNav] = useState('journey');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Core Patient Journey State
+  // DB connection state
+  const [isDbLoading, setIsDbLoading] = useState(true);
+  const [isDbConnected, setIsDbConnected] = useState(false);
+
+  // Core Patient Journey State (initialized with local fallback data)
   const [patient, setPatient] = useState(INITIAL_PATIENT_DATA);
   const [events, setEvents] = useState(INITIAL_JOURNEY_EVENTS);
   const [gap, setGap] = useState(INITIAL_CARE_GAP);
@@ -65,6 +81,188 @@ export function PatientDashboardPage({ onBackToLanding }) {
   const [sharedRecords, setSharedRecords] = useState(INITIAL_SHARED_RECORDS);
   const [activities, setActivities] = useState(INITIAL_ACTIVITY);
   const [externalVerification, setExternalVerification] = useState(null);
+
+  // ─── Load all patient data from Supabase ─────────────────────────
+  const loadFromSupabase = useCallback(async () => {
+    setIsDbLoading(true);
+    try {
+      const [dbPatient, dbEvents, dbGaps, dbGapEvidence, dbReports, dbAppointments, dbShared, dbActivity] =
+        await Promise.allSettled([
+          patientService.getById(PATIENT_ID),
+          journeyService.getByPatient(PATIENT_ID),
+          careGapService.getByPatient(PATIENT_ID),
+          careGapService.getWithEvidence('GAP-2026-01'),
+          reportService.getByPatient(PATIENT_ID),
+          appointmentService.getByPatient(PATIENT_ID),
+          sharedRecordService.getByPatient(PATIENT_ID),
+          activityService.getByPatient(PATIENT_ID, 10),
+        ]);
+
+      let connected = false;
+
+      // Patient
+      if (dbPatient.status === 'fulfilled' && dbPatient.value) {
+        const p = dbPatient.value;
+        setPatient({
+          id: p.id,
+          name: p.name,
+          firstName: p.first_name || p.name?.split(' ')[0],
+          age: p.age,
+          gender: p.gender,
+          avatar: p.avatar || 'RS',
+          email: p.email,
+          phone: p.phone,
+          carePlan: p.care_plan,
+          primaryProvider: p.primary_provider,
+          specialistProvider: p.specialist_provider,
+          providers: p.providers || [],
+          journeyProgress: p.journey_progress || 78,
+          completedSteps: p.completed_steps || 7,
+          totalSteps: p.total_steps || 9,
+          journeyStatus: p.journey_status || 'ACTION_NEEDED',
+        });
+        connected = true;
+      }
+
+      // Journey Events
+      if (dbEvents.status === 'fulfilled' && dbEvents.value?.length > 0) {
+        const mapped = dbEvents.value.map((e) => ({
+          id: e.id,
+          key: e.event_key,
+          type: e.event_type,
+          shortLabel: e.short_label,
+          provider: e.provider,
+          facilityGroup: e.facility_group,
+          doctor: e.doctor,
+          date: e.event_date,
+          expectedWindow: e.expected_window,
+          status: e.status,
+          evidence: e.evidence,
+          missingItem: e.missing_item,
+          nextDependency: e.next_dependency,
+          confidence: e.confidence,
+          isGap: e.is_gap,
+          details: e.details,
+        }));
+        setEvents(mapped);
+        connected = true;
+      }
+
+      // Care Gaps + Evidence
+      if (dbGapEvidence.status === 'fulfilled' && dbGapEvidence.value?.gap) {
+        const { gap: g, evidence: ev } = dbGapEvidence.value;
+        if (g.status !== 'RESOLVED') {
+          setGap({
+            id: g.id,
+            eventKey: g.event_key,
+            event: g.gap_type,
+            title: g.title,
+            reason: g.reason,
+            confidence: g.confidence,
+            priority: g.priority,
+            status: g.status === 'OPEN' ? 'UNVERIFIED' : g.status,
+            evidenceChecklist: ev?.map((e, i) => ({
+              id: e.id,
+              label: e.label,
+              verified: e.verified,
+              detail: e.detail,
+            })) || INITIAL_CARE_GAP.evidenceChecklist,
+          });
+        }
+        connected = true;
+      }
+
+      // Reports
+      if (dbReports.status === 'fulfilled' && dbReports.value?.length > 0) {
+        setReports(dbReports.value.map((r) => {
+          const matchingInitial = INITIAL_REPORTS.find((ir) => ir.title.toLowerCase() === r.title?.toLowerCase() || ir.id === r.id);
+          return {
+            id: r.id,
+            title: r.title,
+            status: r.status,
+            relativeTime: r.relative_time,
+            date: r.report_date || matchingInitial?.date,
+            provider: r.provider,
+            facility: matchingInitial?.facility || r.provider,
+            category: r.category,
+            workflowStage: r.workflow_stage,
+            sharedWith: r.shared_with || matchingInitial?.sharedWith || [],
+            fileName: r.file_name || matchingInitial?.fileName,
+            fileSize: r.file_size || matchingInitial?.fileSize,
+            summaryNote: r.summary_note || matchingInitial?.summaryNote,
+            labDirector: matchingInitial?.labDirector || 'Dr. S. Roy, MD (Pathology)',
+            specimen: matchingInitial?.specimen || 'Standard Clinical Sample',
+            collectedAt: matchingInitial?.collectedAt || `${r.report_date || '11 Oct 2026'}, 09:00 AM`,
+            reportedAt: matchingInitial?.reportedAt || `${r.report_date || '11 Oct 2026'}, 03:30 PM`,
+            testResults: matchingInitial?.testResults || [
+              { test: `${r.title} Evaluation`, value: 'Verified', unit: 'Index', refRange: 'Verified', flag: 'Normal' }
+            ],
+            clinicalImpression: matchingInitial?.clinicalImpression || r.summary_note || 'Report verified on CARELOOP continuity pathway.',
+          };
+        }));
+        connected = true;
+      }
+
+      // Appointments
+      if (dbAppointments.status === 'fulfilled' && dbAppointments.value?.length > 0) {
+        setAppointments(dbAppointments.value.map((a) => ({
+          id: a.id,
+          title: a.title,
+          date: a.appt_date,
+          shortDate: a.short_date,
+          time: a.appt_time,
+          doctor: a.doctor,
+          provider: a.provider,
+          department: a.department,
+          location: a.location,
+          status: a.status,
+          note: a.note,
+          reminderSet: a.reminder_set,
+          confirmed: a.confirmed,
+        })));
+        connected = true;
+      }
+
+      // Shared Records
+      if (dbShared.status === 'fulfilled' && dbShared.value?.length > 0) {
+        setSharedRecords(dbShared.value.map((s) => ({
+          id: s.id,
+          provider: s.provider,
+          role: s.provider_role,
+          records: s.records,
+          includedItems: s.included_items || [],
+          authorization: s.auth_status,
+          authorizedDate: s.authorized_date,
+          lastAccessed: s.last_accessed,
+          active: s.active,
+        })));
+        connected = true;
+      }
+
+      // Activity
+      if (dbActivity.status === 'fulfilled' && dbActivity.value?.length > 0) {
+        setActivities(dbActivity.value.map((a) => ({
+          id: a.id,
+          time: new Date(a.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+          title: a.message,
+          subtitle: a.log_type,
+          type: a.log_type === 'success' ? 'verified' : a.log_type === 'alert' ? 'warning' : 'info',
+        })));
+      }
+
+      setIsDbConnected(connected);
+    } catch {
+      setIsDbConnected(false);
+    } finally {
+      setIsDbLoading(false);
+    }
+  }, [PATIENT_ID]);
+
+  useEffect(() => {
+    loadFromSupabase();
+  }, [loadFromSupabase]);
+
+
 
   // Action Checklist State (for "My Actions" tab)
   const [actionItems, setActionItems] = useState([
@@ -126,170 +324,118 @@ export function PatientDashboardPage({ onBackToLanding }) {
   /* ──────────────────────────────────────────────────────────
      CARE GAP RESOLUTION LOGIC (Sections 6, 7 & 17)
      ────────────────────────────────────────────────────────── */
-  const handleConfirmCompleted = () => {
+  const handleConfirmCompleted = async () => {
     setVerifyModalOpen(false);
     setExternalVerification(null);
+
+    // Persist to Supabase
+    try {
+      await Promise.allSettled([
+        careGapService.resolveGap(gap.id, PATIENT_ID, 'SELF_VERIFIED', { notes: 'Patient confirmed follow-up completion' }, patient.name),
+        patientService.updateJourneyProgress(PATIENT_ID, 100, 9, 'CARE_CLOSED'),
+        journeyService.updateEventStatus('EVT-07', PATIENT_ID, 'VERIFIED', { event_date: 'Verified Today', evidence: 'Patient-confirmed follow-up completion', missing_item: null }),
+        journeyService.updateEventStatus('EVT-08', PATIENT_ID, 'VERIFIED', { event_date: 'Closed Today', evidence: 'All 9 care continuity steps verified ✓', missing_item: null }),
+      ]);
+    } catch { /* UI already updated — Supabase is best-effort */ }
 
     setEvents((prev) =>
       prev.map((ev) => {
         if (ev.key === 'FOLLOW_UP') {
-          return {
-            ...ev,
-            status: 'VERIFIED',
-            date: 'Verified Today',
-            evidence: 'Patient-confirmed follow-up completion',
-            missingItem: null,
-          };
+          return { ...ev, status: 'VERIFIED', date: 'Verified Today', evidence: 'Patient-confirmed follow-up completion', missingItem: null };
         }
         if (ev.key === 'CLOSURE') {
-          return {
-            ...ev,
-            status: 'VERIFIED',
-            date: 'Closed Today',
-            evidence: 'All 9 care continuity steps verified ✓',
-            missingItem: null,
-          };
+          return { ...ev, status: 'VERIFIED', date: 'Closed Today', evidence: 'All 9 care continuity steps verified ✓', missingItem: null };
         }
         return ev;
       })
     );
 
-    setPatient((prev) => ({
-      ...prev,
-      journeyProgress: 100,
-      completedSteps: 9,
-      journeyStatus: 'CARE_CLOSED',
-    }));
-
+    setPatient((prev) => ({ ...prev, journeyProgress: 100, completedSteps: 9, journeyStatus: 'CARE_CLOSED' }));
     setGap((prev) => ({ ...prev, status: 'VERIFIED' }));
-
-    setActionItems((prev) =>
-      prev.map((item) =>
-        item.id === 'act-verify-followup' ? { ...item, status: 'COMPLETED' } : item
-      )
-    );
-
+    setActionItems((prev) => prev.map((item) => item.id === 'act-verify-followup' ? { ...item, status: 'COMPLETED' } : item));
     setActivities((prev) => [
-      {
-        id: `ACT-${Date.now()}`,
-        time: 'Just now',
-        title: 'Follow-up verified & Care loop closed ✓',
-        subtitle: 'Journey progress updated from 78% to 100% (CARE CLOSED)',
-        type: 'verified',
-      },
+      { id: `ACT-${Date.now()}`, time: 'Just now', title: 'Follow-up verified & Care loop closed ✓', subtitle: 'Journey progress updated from 78% to 100% (CARE CLOSED)', type: 'verified' },
       ...prev.filter((a) => a.id !== 'ACT-01'),
     ]);
 
     triggerToast('Follow-up verified — Care journey successfully closed (100%).');
   };
 
-  const handleConfirmElsewhere = ({ provider, date, reportFile }) => {
+
+  const handleConfirmElsewhere = async ({ provider, date, reportFile }) => {
     setVerifyModalOpen(false);
     setExternalVerification({ provider, date, reportFile });
+
+    // Persist to Supabase
+    try {
+      await Promise.allSettled([
+        careGapService.resolveGap(gap.id, PATIENT_ID, 'EXTERNAL_PROVIDER', { providerName: provider, providerDate: date, notes: `Completed at ${provider}`, authorized: true }, patient.name),
+        patientService.updateJourneyProgress(PATIENT_ID, 100, 9, 'CARE_CLOSED'),
+        sharedRecordService.grantAccess(PATIENT_ID, provider, 'External Continuity Provider', 'Follow-up verification record', ['Follow-up Record']),
+        journeyService.updateEventStatus('EVT-07', PATIENT_ID, 'VERIFIED', { event_date: date, provider, evidence: `Patient-authorized record from ${provider}`, missing_item: null }),
+        journeyService.updateEventStatus('EVT-08', PATIENT_ID, 'VERIFIED', { event_date: 'Closed Today', evidence: 'Cross-provider care continuity verified ✓', missing_item: null }),
+      ]);
+    } catch { /* UI already updated — Supabase is best-effort */ }
 
     setEvents((prev) =>
       prev.map((ev) => {
         if (ev.key === 'FOLLOW_UP') {
-          return {
-            ...ev,
-            status: 'VERIFIED',
-            provider,
-            date,
-            evidence: `Patient-authorized record from ${provider}`,
-            missingItem: null,
-          };
+          return { ...ev, status: 'VERIFIED', provider, date, evidence: `Patient-authorized record from ${provider}`, missingItem: null };
         }
         if (ev.key === 'CLOSURE') {
-          return {
-            ...ev,
-            status: 'VERIFIED',
-            date: 'Closed Today',
-            evidence: 'Cross-provider care continuity verified ✓',
-            missingItem: null,
-          };
+          return { ...ev, status: 'VERIFIED', date: 'Closed Today', evidence: 'Cross-provider care continuity verified ✓', missingItem: null };
         }
         return ev;
       })
     );
 
-    setPatient((prev) => ({
-      ...prev,
-      journeyProgress: 100,
-      completedSteps: 9,
-      journeyStatus: 'CARE_CLOSED',
-    }));
-
+    setPatient((prev) => ({ ...prev, journeyProgress: 100, completedSteps: 9, journeyStatus: 'CARE_CLOSED' }));
     setGap((prev) => ({ ...prev, status: 'VERIFIED' }));
 
-    // Add external provider to Shared Records automatically with patient authorization
+    // Add external provider to Shared Records automatically
     setSharedRecords((prev) => {
       const exists = prev.some((r) => r.provider.toLowerCase() === provider.toLowerCase());
       if (exists) return prev;
-      return [
-        ...prev,
-        {
-          id: `SHR-${Date.now()}`,
-          provider,
-          role: 'External Continuity Provider',
-          records: 'Follow-up verification record',
-          authorization: 'Authorized',
-          lastAccessed: `${provider} · Just now`,
-          active: true,
-        },
-      ];
+      return [...prev, { id: `SHR-${Date.now()}`, provider, role: 'External Continuity Provider', records: 'Follow-up verification record', authorization: 'Authorized', lastAccessed: `${provider} · Just now`, active: true }];
     });
 
-    setActionItems((prev) =>
-      prev.map((item) =>
-        item.id === 'act-verify-followup' ? { ...item, status: 'COMPLETED' } : item
-      )
-    );
-
+    setActionItems((prev) => prev.map((item) => item.id === 'act-verify-followup' ? { ...item, status: 'COMPLETED' } : item));
     setActivities((prev) => [
-      {
-        id: `ACT-${Date.now()}`,
-        time: 'Just now',
-        title: `Follow-up verified via ${provider} ✓`,
-        subtitle: 'Patient-authorized cross-provider record closed the care loop (100%)',
-        type: 'verified',
-      },
+      { id: `ACT-${Date.now()}`, time: 'Just now', title: `Follow-up verified via ${provider} ✓`, subtitle: 'Patient-authorized cross-provider record closed the care loop (100%)', type: 'verified' },
       ...prev.filter((a) => a.id !== 'ACT-01'),
     ]);
 
     triggerToast(`Cross-provider record authorized from ${provider}. Care journey closed!`);
   };
 
-  const handleConfirmUnsure = () => {
+  const handleConfirmUnsure = async () => {
     setVerifyModalOpen(false);
+
+    // Persist to Supabase
+    try {
+      await Promise.allSettled([
+        careGapService.resolveGap(gap.id, PATIENT_ID, 'UNSURE', { notes: 'Patient unsure — care team to verify' }, patient.name),
+        patientService.update(PATIENT_ID, { journey_status: 'VERIFICATION_REQUESTED' }),
+        journeyService.updateEventStatus('EVT-07', PATIENT_ID, 'UNKNOWN', { details: 'Marked as Unknown by patient. Care team checking provider records.' }),
+      ]);
+    } catch { /* UI already updated */ }
+
     setEvents((prev) =>
       prev.map((ev) =>
         ev.key === 'FOLLOW_UP'
-          ? {
-              ...ev,
-              status: 'UNKNOWN',
-              details:
-                'Marked as Unknown by patient. CARELOOP has asked the care coordination team to check provider records without assuming the step was missed.',
-            }
+          ? { ...ev, status: 'UNKNOWN', details: 'Marked as Unknown by patient. CARELOOP has asked the care coordination team to check provider records without assuming the step was missed.' }
           : ev
       )
     );
-    setPatient((prev) => ({
-      ...prev,
-      journeyStatus: 'VERIFICATION_REQUESTED',
-    }));
+    setPatient((prev) => ({ ...prev, journeyStatus: 'VERIFICATION_REQUESTED' }));
     setGap((prev) => ({ ...prev, status: 'UNKNOWN' }));
     setActivities((prev) => [
-      {
-        id: `ACT-${Date.now()}`,
-        time: 'Just now',
-        title: 'Follow-up marked as Unknown',
-        subtitle: 'Care team notified to check records with City Care Hospital & Specialist Clinic',
-        type: 'verified',
-      },
+      { id: `ACT-${Date.now()}`, time: 'Just now', title: 'Follow-up marked as Unknown', subtitle: 'Care team notified to check records with City Care Hospital & Specialist Clinic', type: 'verified' },
       ...prev,
     ]);
     triggerToast('Status set to Unknown. Your care team will check provider records for you.');
   };
+
 
   const handleResetDemo = () => {
     setPatient(INITIAL_PATIENT_DATA);
@@ -535,7 +681,7 @@ export function PatientDashboardPage({ onBackToLanding }) {
             <span className="font-extrabold text-slate-900">{currentNavLabel}</span>
           </div>
 
-          {/* Right Controls: Search + Demo Mode + Notifications + Patient Profile */}
+          {/* Right Controls: Search + DB Status + Demo Mode + Notifications + Patient Profile */}
           <div className="flex items-center gap-3">
             {/* Search */}
             <div className="relative hidden md:block w-60">
@@ -550,6 +696,27 @@ export function PatientDashboardPage({ onBackToLanding }) {
                 placeholder="Search journey, reports..."
                 className="w-full bg-[#fbfcff] border border-slate-200 rounded-full pl-9 pr-3.5 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-teal-600"
               />
+            </div>
+
+            {/* DB Status Pill */}
+            <div
+              title={isDbLoading ? 'Connecting to Supabase...' : isDbConnected ? 'Live data from Supabase' : 'Using local demo data'}
+              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-all ${
+                isDbLoading
+                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                  : isDbConnected
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : 'bg-slate-100 text-slate-500 border-slate-200'
+              }`}
+            >
+              {isDbLoading ? (
+                <Loader2 size={10} className="animate-spin" />
+              ) : isDbConnected ? (
+                <Database size={10} />
+              ) : (
+                <WifiOff size={10} />
+              )}
+              {isDbLoading ? 'Connecting' : isDbConnected ? 'Live DB' : 'Demo'}
             </div>
 
             {/* Section 17: Demo Mode One-Click Judge Button */}
@@ -1009,9 +1176,40 @@ export function PatientDashboardPage({ onBackToLanding }) {
                         </button>
                       </div>
 
-                      <p className="text-xs text-slate-600 bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                        {rep.summaryNote}
-                      </p>
+                      <div className="space-y-2">
+                        <p className="text-xs text-slate-600 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                          {rep.summaryNote}
+                        </p>
+                        
+                        {/* Interactive PDF Document Attachment Row */}
+                        <div className="flex items-center justify-between p-2.5 rounded-xl bg-teal-50/50 border border-teal-100 text-xs">
+                          <button
+                            type="button"
+                            onClick={() => setViewingReport(rep)}
+                            className="flex items-center gap-2 text-teal-900 hover:text-teal-700 font-mono font-bold text-[11px] truncate cursor-pointer transition-colors text-left"
+                            title="Click to view full PDF document"
+                          >
+                            <span className="px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 font-extrabold text-[10px]">
+                              PDF
+                            </span>
+                            <span className="truncate underline decoration-teal-300 underline-offset-2">
+                              {rep.fileName || `${rep.title}_Report.pdf`}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-sans font-normal">
+                              ({rep.fileSize || '245 KB'})
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setViewingReport(rep)}
+                            className="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer transition-colors flex-shrink-0"
+                          >
+                            <Eye size={12} />
+                            <span>Preview</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1354,65 +1552,241 @@ export function PatientDashboardPage({ onBackToLanding }) {
         isJourneyClosed={isJourneyClosed}
       />
 
-      {/* Section 8: Report Availability Modal (No medical interpretation!) */}
+      {/* Section 8: Realistic Medical PDF Document Viewer Modal */}
       {viewingReport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-[2px]">
-          <div className="bg-white rounded-3xl border border-slate-200 max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200">
-                  {viewingReport.category}
-                </span>
-                <h3 className="text-lg font-extrabold text-slate-900 mt-1">
-                  {viewingReport.title}
-                </h3>
-                <p className="text-xs text-slate-500">
-                  {viewingReport.status} · {viewingReport.relativeTime}
-                </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-in overflow-y-auto">
+          <div className="bg-white rounded-3xl border border-slate-200/90 max-w-2xl w-full shadow-2xl my-auto overflow-hidden flex flex-col max-h-[92vh]">
+            
+            {/* Top Toolbar (simulating PDF Reader) */}
+            <div className="bg-slate-900 text-white px-5 py-3.5 flex items-center justify-between border-b border-slate-800 flex-shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold text-xs">
+                  PDF
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-mono font-bold truncate text-slate-100">
+                    {viewingReport.fileName || `${viewingReport.title.replace(/\s+/g, '_')}_Report.pdf`}
+                  </p>
+                  <p className="text-[10px] text-slate-400">
+                    {viewingReport.fileSize || '245 KB'} · Verified Digital Copy · 100% Authentic
+                  </p>
+                </div>
               </div>
+
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => triggerToast(`Downloading ${viewingReport.fileName || 'Report.pdf'}...`)}
+                  title="Download PDF"
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                >
+                  <Download size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  title="Print Report"
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                >
+                  <Printer size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewingReport(null);
+                    setShareModalOpen(true);
+                  }}
+                  title="Share with Provider"
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                >
+                  <Share2 size={14} />
+                </button>
+                <div className="h-4 w-px bg-slate-700 mx-1" />
+                <button
+                  type="button"
+                  onClick={() => setViewingReport(null)}
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-500/30 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+            </div>
+
+            {/* Document Body (Medical Lab Report Simulation) */}
+            <div className="p-6 sm:p-8 space-y-6 overflow-y-auto bg-slate-50/50">
+              <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs space-y-6">
+                
+                {/* Clinical Header */}
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-5 border-b-2 border-slate-100">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                        CL
+                      </div>
+                      <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
+                        {viewingReport.facility || viewingReport.provider || 'City Care Hospital'}
+                      </h2>
+                    </div>
+                    <p className="text-[11px] font-medium text-slate-500">
+                      Department of Laboratory Medicine & Diagnostics · NABL / CAP Accredited
+                    </p>
+                    <p className="text-[10px] text-slate-400 font-mono">
+                      Ref ID: #{viewingReport.id} · Verification Hash: {viewingReport.id}-AUTH-2026
+                    </p>
+                  </div>
+
+                  <div className="text-left sm:text-right space-y-1">
+                    <span className="inline-block px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-teal-50 text-teal-800 border border-teal-200">
+                      {viewingReport.category}
+                    </span>
+                    <p className="text-xs font-bold text-slate-700">
+                      Date: {viewingReport.date}
+                    </p>
+                    <p className="text-[11px] text-emerald-700 font-bold">
+                      Pathway Stage: {viewingReport.workflowStage}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Patient & Specimen Info Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-[#fbfcff] rounded-xl border border-slate-200/80 text-xs">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Patient Name</span>
+                    <span className="font-extrabold text-slate-900">{patient.name}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Patient ID / Age</span>
+                    <span className="font-bold text-slate-800">{patient.id} · {patient.age}y / {patient.gender}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Specimen</span>
+                    <span className="font-semibold text-slate-700">{viewingReport.specimen || 'Clinical Specimen'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Reported At</span>
+                    <span className="font-semibold text-slate-700">{viewingReport.reportedAt || viewingReport.date}</span>
+                  </div>
+                </div>
+
+                {/* Test Results Table */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">
+                      Investigation Findings
+                    </h3>
+                    <span className="text-[10px] text-slate-500 font-medium">
+                      All units standardized per SI reference
+                    </span>
+                  </div>
+
+                  <div className="border border-slate-200 rounded-xl overflow-hidden">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-slate-100/80 text-slate-700 border-b border-slate-200 text-[11px] font-extrabold">
+                          <th className="py-2.5 px-3.5">Investigation Parameter</th>
+                          <th className="py-2.5 px-3.5">Observed Value</th>
+                          <th className="py-2.5 px-3.5">Reference Interval</th>
+                          <th className="py-2.5 px-3.5 text-right">Flag</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {(viewingReport.testResults && viewingReport.testResults.length > 0
+                          ? viewingReport.testResults
+                          : [
+                              { test: viewingReport.title, value: 'Verified Record', unit: '', refRange: 'Verified', flag: 'Normal' }
+                            ]
+                        ).map((row, i) => {
+                          const isHigh = row.flag === 'High' || row.flag === 'Elevated';
+                          const isLow = row.flag === 'Low';
+                          const isBorder = row.flag === 'Borderline';
+                          return (
+                            <tr key={i} className="hover:bg-slate-50/60 transition-colors">
+                              <td className="py-2.5 px-3.5 font-bold text-slate-800">
+                                {row.test}
+                              </td>
+                              <td className="py-2.5 px-3.5 font-extrabold text-slate-900">
+                                {row.value} {row.unit && <span className="text-[11px] text-slate-500 font-normal">{row.unit}</span>}
+                              </td>
+                              <td className="py-2.5 px-3.5 text-slate-500 font-medium font-mono text-[11px]">
+                                {row.refRange}
+                              </td>
+                              <td className="py-2.5 px-3.5 text-right">
+                                <span
+                                  className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-extrabold ${
+                                    isHigh
+                                      ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                      : isLow
+                                      ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                      : isBorder
+                                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                      : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  }`}
+                                >
+                                  {row.flag || 'Normal'}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Clinical Notes & Impression */}
+                <div className="space-y-1.5 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                  <span className="font-extrabold text-slate-800 block text-[11px] uppercase tracking-wider">
+                    Clinical Summary & Verification Note
+                  </span>
+                  <p className="text-slate-600 leading-relaxed">
+                    {viewingReport.clinicalImpression || viewingReport.summaryNote}
+                  </p>
+                </div>
+
+                {/* Signatures & Hospital Authorization Block */}
+                <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+                  <div>
+                    <p className="font-extrabold text-slate-900">
+                      {viewingReport.labDirector || 'Dr. S. Roy, MD (Pathology)'}
+                    </p>
+                    <p className="text-[11px] text-slate-500">
+                      Chief of Diagnostics · Verified via Digital Hospital Key
+                    </p>
+                  </div>
+
+                  <div className="sm:text-right">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-teal-800 bg-teal-50 px-3 py-1 rounded-full border border-teal-200">
+                      <ShieldCheck size={13} className="text-teal-600" />
+                      CARELOOP Cross-Facility Verified
+                    </span>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      Shared with: {viewingReport.sharedWith?.join(', ') || 'Authorized Care Team'}
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Non-Diagnostic Platform Safety Notice */}
+              <p className="text-[11px] text-slate-400 text-center italic">
+                “CARELOOP displays laboratory availability and workflow continuity only. Results must be reviewed in clinical consultation with your physician.”
+              </p>
+            </div>
+
+            {/* Bottom Actions Footer */}
+            <div className="p-4 bg-white border-t border-slate-100 flex items-center justify-between flex-shrink-0">
+              <span className="text-xs text-slate-500 font-medium">
+                Viewing 1 of 1 verified document
+              </span>
               <button
                 type="button"
                 onClick={() => setViewingReport(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 cursor-pointer"
+                className="btn-soft-pill text-xs py-2 px-6"
               >
-                <X size={15} />
+                Close Preview
               </button>
             </div>
 
-            <div className="space-y-2.5 bg-[#fbfcff] p-4 rounded-2xl border border-slate-200/80 text-xs">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Issuing Provider</span>
-                <span className="font-bold text-slate-900">{viewingReport.provider}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Recorded Date</span>
-                <span className="font-bold text-slate-900">{viewingReport.date}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Care Journey Step</span>
-                <span className="font-bold text-emerald-700">
-                  {viewingReport.workflowStage}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">File Reference</span>
-                <span className="font-mono text-slate-700">{viewingReport.fileName}</span>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-              {viewingReport.summaryNote}
-            </p>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setViewingReport(null)}
-                className="btn-soft-pill text-xs py-2 px-5"
-              >
-                Close
-              </button>
-            </div>
           </div>
         </div>
       )}

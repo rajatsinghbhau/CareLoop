@@ -746,28 +746,39 @@ export function CrossProviderContinuity({ events, externalVerification, onOpenSh
    ────────────────────────────────────────────────────────── */
 export function ReportCard({ report, onViewReport }) {
   return (
-    <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#fbfcff] border border-slate-200/80 hover:border-slate-300 transition-all">
+    <div
+      onClick={() => onViewReport(report)}
+      className="flex items-center justify-between p-3.5 rounded-2xl bg-[#fbfcff] border border-slate-200/80 hover:border-teal-300 hover:shadow-xs transition-all cursor-pointer group"
+    >
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-100 text-teal-700 flex items-center justify-center flex-shrink-0">
+        <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-100 text-teal-700 flex items-center justify-center flex-shrink-0 group-hover:bg-teal-600 group-hover:text-white transition-colors">
           <FileText size={16} />
         </div>
         <div className="min-w-0">
-          <h4 className="text-xs font-extrabold text-slate-900 truncate">
-            {report.title}
-          </h4>
-          <p className="text-[11px] text-slate-500">
-            {report.status} · {report.relativeTime}
+          <div className="flex items-center gap-2">
+            <h4 className="text-xs font-extrabold text-slate-900 truncate">
+              {report.title}
+            </h4>
+            <span className="px-1.5 py-0.2 rounded bg-rose-50 text-rose-700 border border-rose-200 font-extrabold text-[9px] uppercase">
+              PDF
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 truncate">
+            {report.fileName || `${report.title}.pdf`} · {report.status}
           </p>
         </div>
       </div>
 
       <button
         type="button"
-        onClick={() => onViewReport(report)}
-        className="px-3 py-1.5 rounded-full text-xs font-bold text-teal-700 bg-teal-50/80 hover:bg-teal-100 border border-teal-200/70 transition-colors flex items-center gap-1 flex-shrink-0 cursor-pointer"
+        onClick={(e) => {
+          e.stopPropagation();
+          onViewReport(report);
+        }}
+        className="px-3 py-1.5 rounded-full text-xs font-bold text-teal-700 bg-teal-50/80 group-hover:bg-teal-600 group-hover:text-white border border-teal-200/70 transition-all flex items-center gap-1 flex-shrink-0 cursor-pointer"
       >
         <Eye size={12} />
-        <span>View report</span>
+        <span>View PDF</span>
       </button>
     </div>
   );
