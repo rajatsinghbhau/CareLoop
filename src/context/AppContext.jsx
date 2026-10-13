@@ -17,7 +17,7 @@ export const DEMO_USERS = [
     id: 'U001',
     username: 'admin',
     password: 'admin123',
-    name: 'Dr. Admin',
+    name: 'Admin',
     role: 'ADMIN',
     avatar: 'A',
     email: 'admin@careloop.health',
