@@ -414,7 +414,7 @@ export function HomePage({ onExploreApp, onSelectPatient }) {
             <div className="pt-4 flex flex-wrap items-center justify-center gap-2">
               {[
                 { id: 'ALL', label: 'All Pathways' },
-                { id: 'DIABETES', label: 'Diabetes & Nephrology' },
+                { id: 'DIABETES', label: 'Diabetes & Metabolic' },
                 { id: 'CARDIO', label: 'Cardiology' },
                 { id: 'ONCOLOGY', label: 'Oncology Surveillance' },
                 { id: 'PULMONARY', label: 'Pulmonology' },
@@ -430,47 +430,80 @@ export function HomePage({ onExploreApp, onSelectPatient }) {
             </div>
           </div>
 
-          {/* Pathway Patient Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
-            {patients.slice(0, 3).map((p) => {
-              const isGap = p.careStatus === 'GAP_DETECTED';
+          {/* Pathway Patient Cards Filtered by Specialty */}
+          {(() => {
+            const filteredPatients = patients.filter((p) => {
+              if (activeTab === 'ALL') return true;
+              const cond = (p.condition || '').toLowerCase();
+              if (activeTab === 'DIABETES') return cond.includes('diabet') || cond.includes('metabolic') || cond.includes('nephro');
+              if (activeTab === 'CARDIO') return cond.includes('cardio') || cond.includes('coronary') || cond.includes('artery') || cond.includes('heart');
+              if (activeTab === 'ONCOLOGY') return cond.includes('cancer') || cond.includes('oncol') || cond.includes('carcinoma') || cond.includes('tumor');
+              if (activeTab === 'PULMONARY') return cond.includes('asthma') || cond.includes('pulmon') || cond.includes('copd') || cond.includes('chest') || cond.includes('sleep');
+              return true;
+            });
+
+            if (filteredPatients.length === 0) {
               return (
-                <div
-                  key={p.id}
-                  onClick={() => onSelectPatient(p.id)}
-                  className="clean-pill-card hover:-translate-y-1 cursor-pointer flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs font-mono font-semibold text-slate-400">{p.id}</span>
-                      {isGap ? (
-                        <span className="badge-clean-coral">
-                          ⚠ CARE GAP DETECTED
-                        </span>
-                      ) : (
-                        <span className="badge-clean-emerald">
-                          ✓ IN PROGRESS
-                        </span>
-                      )}
-                    </div>
-
-                    <h3 className="text-lg font-bold text-slate-900">{p.name}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">{p.age} years • {p.gender}</p>
-
-                    <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
-                      <p className="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Condition</p>
-                      <p className="text-xs font-semibold text-slate-800 mt-0.5">{p.condition}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#e84343]">
-                    <span>Open Continuity Map</span>
-                    <ArrowUpRight size={15} />
-                  </div>
+                <div className="text-center py-12 bg-slate-50/70 rounded-3xl border border-slate-200/80 p-8">
+                  <p className="text-sm font-bold text-slate-700">No active patients registered under this clinical category yet.</p>
+                  <p className="text-xs text-slate-400 mt-1">Switch to another category or explore "All Pathways".</p>
                 </div>
               );
-            })}
-          </div>
+            }
+
+            return (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
+                {filteredPatients.map((p) => {
+                  const isGap = p.careStatus === 'GAP_DETECTED';
+                  return (
+                    <div
+                      key={p.id}
+                      onClick={() => onSelectPatient(p.id)}
+                      className="clean-pill-card hover:-translate-y-1 cursor-pointer flex flex-col justify-between group transition-all"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-xs font-mono font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                            {p.id}
+                          </span>
+                          {isGap ? (
+                            <span className="badge-clean-coral">
+                              ⚠ CARE GAP DETECTED
+                            </span>
+                          ) : (
+                            <span className="badge-clean-emerald">
+                              ✓ CARE CLOSED
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 className="text-lg font-extrabold text-slate-900 group-hover:text-[#e84343] transition-colors">
+                          {p.name}
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {p.age} years • {p.gender} • Dr. {p.doctorId === 'D001' ? 'Priya Sharma' : p.doctorId === 'D002' ? 'Arjun Mehta' : 'Meera Pillai'}
+                        </p>
+
+                        <div className="mt-4 p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+                          <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                            Clinical Pathway
+                          </p>
+                          <p className="text-xs font-bold text-slate-800 leading-snug">
+                            {p.condition}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#e84343] group-hover:translate-x-0.5 transition-transform">
+                        <span>Open Continuity Map™</span>
+                        <ArrowUpRight size={15} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
       </section>
 
