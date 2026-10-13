@@ -46,7 +46,13 @@ export function HomePage({ onExploreApp, onSelectPatient }) {
           {/* Center Links */}
           <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-600">
             <a href="#how-it-works" className="hover:text-[#e84343] transition-colors">How It Works</a>
-            <a href="#continuity-map" className="hover:text-[#e84343] transition-colors">Continuity Map™</a>
+            <button
+              type="button"
+              onClick={() => onExploreApp('map')}
+              className="hover:text-[#e84343] transition-colors font-semibold cursor-pointer"
+            >
+              Continuity Map™
+            </button>
             <a href="#pathways" className="hover:text-[#e84343] transition-colors">Care Pathways</a>
             <a href="#benefits" className="hover:text-[#e84343] transition-colors">For Hospitals & Clinics</a>
           </nav>

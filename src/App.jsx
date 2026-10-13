@@ -97,6 +97,7 @@ function AppContent() {
       case 'tasks':
         return <TaskCenterPage onSelectPatient={handleSelectPatient} />;
       case 'analytics':
+      case 'dashboard':
         return <AnalyticsPage />;
       case 'import':
         return <CsvImportPage />;
