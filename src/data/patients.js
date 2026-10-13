@@ -69,7 +69,7 @@ export const INITIAL_PATIENTS = [
     age: 52,
     gender: 'Male',
     condition: 'Type 2 Diabetes (Complex Care Pathway)',
-    phone: '+91 98112 34567',
+    phone: '+91 6006853510',
     email: 'rahul.sharma@demo-health.org',
     doctorId: 'D001',
     coordinatorId: 'CC001',

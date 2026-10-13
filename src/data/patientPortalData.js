@@ -10,7 +10,7 @@ export const INITIAL_PATIENT_DATA = {
   gender: 'Male',
   avatar: 'RS',
   email: 'rahul.sharma@careloop-demo.org',
-  phone: '+91 98112 34567',
+  phone: '+91 6006853510',
   carePlan: 'Diabetes & Metabolic Care Continuity Pathway',
   primaryProvider: 'City Care Hospital',
   specialistProvider: 'Specialist Clinic',

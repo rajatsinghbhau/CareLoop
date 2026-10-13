@@ -56,17 +56,34 @@ function ContactModal({ patient, gap, onClose }) {
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Contact Method</label>
-          <div className="flex gap-2">
-            {['phone', 'email', 'sms', 'in-person'].map((m) => (
-              <button
-                key={m}
-                onClick={() => setMethod(m)}
-                className={`filter-pill text-xs capitalize ${method === m ? 'active' : ''}`}
-              >
-                {m}
-              </button>
-            ))}
+          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+            Contact Method *
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {[
+              { id: 'phone', label: 'Phone Call', icon: Phone },
+              { id: 'sms', label: 'SMS / Text', icon: MessageSquare },
+              { id: 'email', label: 'Email', icon: Mail },
+              { id: 'in-person', label: 'In-Person', icon: User },
+            ].map((item) => {
+              const Icon = item.icon;
+              const isSelected = method === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setMethod(item.id)}
+                  className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                    isSelected
+                      ? 'bg-[#e84343] text-white border-[#e84343] shadow-sm shadow-rose-200 ring-2 ring-rose-200'
+                      : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  <Icon size={13} className={isSelected ? 'text-white' : 'text-slate-400'} />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
