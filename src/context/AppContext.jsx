@@ -26,13 +26,13 @@ export const DEMO_USERS = [
   },
   {
     id: 'U003',
-    username: 'coordinator',
-    password: 'coord123',
-    name: 'Anjali Gupta',
-    role: 'CARE_COORDINATOR',
-    avatar: 'AG',
-    email: 'anjali@careloop.health',
-    coordinatorId: 'CC001',
+    username: 'patient',
+    password: 'patient123',
+    name: 'Rahul Sharma',
+    role: 'PATIENT',
+    avatar: 'RS',
+    email: 'rahul.sharma@careloop.health',
+    patientId: 'P-1001',
   },
 ];
 

@@ -9,6 +9,7 @@ import { useApp } from '../../context/AppContext';
 
 const NAV_ITEMS = [
   { id: 'landing', label: 'Home Portal', icon: Globe, badge: 'PORTAL' },
+  { id: 'patient-dashboard', label: 'Patient Dashboard', icon: Activity, badge: 'PATIENT' },
   { id: 'map', label: 'Continuity Map', icon: GitCommit, badge: 'SIGNATURE' },
   { id: 'patients', label: 'Patient Register', icon: Users },
   { id: 'gaps', label: 'Care Gaps', icon: AlertCircle },

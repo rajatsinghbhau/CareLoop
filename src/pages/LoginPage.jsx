@@ -8,8 +8,8 @@ import { useApp, DEMO_USERS } from '../context/AppContext';
 
 export function LoginPage() {
   const { login } = useApp();
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin123');
+  const [username, setUsername] = useState('patient');
+  const [password, setPassword] = useState('patient123');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -166,18 +166,39 @@ export function LoginPage() {
                   key={u.id}
                   type="button"
                   onClick={() => handleQuickLogin(u)}
-                  className="w-full text-left p-3.5 rounded-2xl border border-slate-100 bg-[#fbfcff] hover:bg-rose-50/50 hover:border-rose-200/80 transition-all flex items-center justify-between group shadow-2xs"
+                  className={`w-full text-left p-3.5 rounded-2xl border transition-all flex items-center justify-between group shadow-2xs ${
+                    u.role === 'PATIENT'
+                      ? 'border-teal-300 bg-teal-50/40 hover:bg-teal-50/80'
+                      : 'border-slate-100 bg-[#fbfcff] hover:bg-rose-50/50 hover:border-rose-200/80'
+                  }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center font-bold text-xs text-slate-700 group-hover:bg-[#e84343] group-hover:text-white group-hover:border-[#e84343] transition-colors">
+                    <div
+                      className={`w-8 h-8 rounded-full border flex items-center justify-center font-bold text-xs transition-colors ${
+                        u.role === 'PATIENT'
+                          ? 'bg-teal-600 text-white border-teal-600'
+                          : 'bg-white border-slate-200 text-slate-700 group-hover:bg-[#e84343] group-hover:text-white group-hover:border-[#e84343]'
+                      }`}
+                    >
                       {u.avatar}
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-slate-900">{u.name}</p>
-                      <p className="text-[11px] text-slate-500 capitalize">{u.role.toLowerCase().replace('_', ' ')}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-bold text-slate-900">{u.name}</p>
+                        {u.role === 'PATIENT' && (
+                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-teal-100 text-teal-800">
+                            Patient Dashboard
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-500 capitalize">
+                        {u.role === 'PATIENT'
+                          ? 'Personal Care Continuity Portal'
+                          : u.role.toLowerCase().replace('_', ' ')}
+                      </p>
                     </div>
                   </div>
-                  <span className="text-xs font-bold text-[#e84343] opacity-0 group-opacity-100 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                  <span className="text-xs font-bold text-[#e84343] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                     Launch <ArrowRight size={13} />
                   </span>
                 </button>

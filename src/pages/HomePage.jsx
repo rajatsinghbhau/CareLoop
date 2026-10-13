@@ -61,10 +61,10 @@ export function HomePage({ onExploreApp, onSelectPatient }) {
               <ArrowRight size={13} />
             </button>
             <button
-              onClick={() => onExploreApp('dashboard')}
+              onClick={() => onExploreApp('patient-dashboard')}
               className="btn-soft-pill text-xs py-2 px-4 hidden sm:inline-flex"
             >
-              Staff Portal
+              Patient Dashboard
             </button>
           </div>
         </div>

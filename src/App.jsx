@@ -1,10 +1,10 @@
 // CARELOOP - Main Application Entry Point
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { LoginPage } from './pages/LoginPage';
 import { HomePage } from './pages/HomePage';
 import { CareContinuityMap } from './components/CareContinuityMap';
-import { DashboardPage } from './pages/DashboardPage';
+import { PatientDashboardPage } from './pages/PatientDashboardPage';
 import { PatientListPage } from './pages/PatientListPage';
 import { PatientDetailsPage } from './pages/PatientDetailsPage';
 import { CareGapsPage } from './pages/CareGapsPage';
@@ -17,9 +17,17 @@ import { Sidebar, NotificationToast } from './components/shared/Navigation';
 
 function AppContent() {
   const { user } = useApp();
-  // Set default page to the new beautiful 'landing' home page inspired by user reference
   const [currentPage, setCurrentPage] = useState('landing');
   const [selectedPatientId, setSelectedPatientId] = useState('P-1001');
+
+  // When logging in as Rahul Sharma (PATIENT role), route directly to the Patient Dashboard
+  useEffect(() => {
+    if (user?.role === 'PATIENT') {
+      setCurrentPage('patient-dashboard');
+    } else if (user) {
+      setCurrentPage('landing');
+    }
+  }, [user]);
 
   if (!user) {
     return <LoginPage />;
@@ -31,8 +39,18 @@ function AppContent() {
 
   const handleSelectPatient = (patientId) => {
     setSelectedPatientId(patientId);
-    setCurrentPage('map'); // Route straight into Care Continuity Map for that patient!
+    setCurrentPage('map');
   };
+
+  // Patient Dashboard has its own dedicated Left Sidebar & Top Bar layout
+  if (currentPage === 'patient-dashboard' || currentPage === 'dashboard') {
+    return (
+      <>
+        <PatientDashboardPage onBackToLanding={() => setCurrentPage('landing')} />
+        <NotificationToast />
+      </>
+    );
+  }
 
   const renderPage = () => {
     if (currentPage === 'patient-details' && selectedPatientId) {
@@ -59,8 +77,6 @@ function AppContent() {
             onPatientChange={(id) => setSelectedPatientId(id)}
           />
         );
-      case 'dashboard':
-        return <DashboardPage onNavigate={handleNavigate} onSelectPatient={handleSelectPatient} />;
       case 'patients':
         return <PatientListPage onNavigate={handleNavigate} onSelectPatient={handleSelectPatient} />;
       case 'gaps':
